@@ -1,18 +1,25 @@
 defmodule NervesHubCA do
-  @moduledoc """
-  Documentation for NervesHubCA.
-  """
+  alias NervesHubCA.CFSSL
 
   @doc """
-  Hello world.
+  Create a new certificate for a device.
 
-  ## Examples
+  The supplied serial number will be stored
+  in the Organization of the Distinguished Name.
 
-      iex> NervesHubCA.hello
-      :world
-
+  Parameters:
+    `serial`: The manufacturer serial number of the device
   """
-  def hello do
-    :world
+  @spec create_device_certificate(binary) :: CFSSL.result()
+  def create_device_certificate(serial) do
+    params = %{
+      request: %{
+        hosts: [""],
+        names: [%{O: serial}],
+        CN: "NervesHub Device Certificate"
+      }
+    }
+
+    CFSSL.newcert(RootCA, params)
   end
 end

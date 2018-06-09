@@ -1,15 +1,31 @@
+install_elixir: &install_elixir
+  run:
+    name: Install Elixir
+    command: |
+      wget https://github.com/elixir-lang/elixir/releases/download/v$ELIXIR_VERSION/Precompiled.zip
+      unzip -d $HOME/elixir Precompiled.zip
+      echo 'export PATH=$HOME/elixir/bin:$PATH' >> $BASH_ENV
+
+install_cfssl: &install_cfssl
+  run:
+    name: Install CFSSL
+    command: |
+      go get -u github.com/cloudflare/cfssl/cmd/cfssl
+
 version: 2
 jobs:
   build:
     docker:
-      - image: circleci/elixir:1.6
+      - image: circleci/golang:1.8
         environment:
           MIX_ENV: test
+          ELIXIR_VERSION: 1.6.5
 
     working_directory: ~/repo
     steps:
       - checkout
-
+      - <<: *install_cfssl
+      - <<: *install_elixir
       - run: mix local.hex --force
       - run: mix local.rebar --force
       - run: mix deps.get
