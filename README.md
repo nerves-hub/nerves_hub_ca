@@ -1,5 +1,7 @@
 # NervesHubCA
 
+[![CircleCI](https://circleci.com/gh/nerves-hub/nerves_hub_ca.svg?style=svg)](https://circleci.com/gh/nerves-hub/nerves_hub_ca)
+
 **TODO: Add description**
 
 ## Installation
