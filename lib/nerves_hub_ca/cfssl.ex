@@ -3,8 +3,8 @@ defmodule NervesHubCA.CFSSL do
 
   import NervesHubCA.Utils
 
-  @port 8888
   @address "127.0.0.1"
+  @port 8888
   @endpoint "api/v1/cfssl"
 
   @init_poll 200
@@ -112,13 +112,14 @@ defmodule NervesHubCA.CFSSL do
   end
 
   def init(opts) do
-    IO.inspect(opts)
     opts = default_opts(opts)
 
     address = opts[:address]
     port = opts[:port]
-    ca = opts[:ca]
-    ca_key = opts[:ca_key]
+    ca = opts[:ca] || Path.join(NervesHubCA.working_dir(), "ca.pem")
+    ca_key = opts[:ca_key] || Path.join(NervesHubCA.working_dir(), "ca-key.pem")
+
+    ca_config = opts[:ca_config] || Path.join(NervesHubCA.working_dir(), "ca-config.json")
 
     {:ok, pid} =
       MuonTrap.Daemon.start_link("cfssl", [
@@ -130,7 +131,9 @@ defmodule NervesHubCA.CFSSL do
         "-address",
         address,
         "-port",
-        to_string(port)
+        to_string(port),
+        "-config",
+        ca_config
       ])
 
     send(self(), :init)
@@ -141,7 +144,6 @@ defmodule NervesHubCA.CFSSL do
        port: port,
        server: pid,
        ca: ca,
-       ca_key: ca_key,
        start_attempts: 0,
        status: :starting
      }}
@@ -184,9 +186,8 @@ defmodule NervesHubCA.CFSSL do
   end
 
   defp default_opts(opts) do
-    opts
-    |> Keyword.put_new(:address, @address)
-    |> Keyword.put_new(:port, @port)
+    Application.get_env(:nerves_hub_ca, :cfssl, port: @port, address: @address)
+    |> Keyword.merge(opts)
   end
 
   defp url(endpoint, s) do

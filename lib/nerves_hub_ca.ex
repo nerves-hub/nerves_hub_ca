@@ -17,9 +17,14 @@ defmodule NervesHubCA do
         hosts: [""],
         names: [%{O: serial}],
         CN: "NervesHub Device Certificate"
-      }
+      },
+      profile: "client"
     }
 
     CFSSL.newcert(RootCA, params)
+  end
+
+  def working_dir do
+    Application.get_env(:nerves_hub_ca, :working_dir, "/tmp")
   end
 end

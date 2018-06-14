@@ -7,9 +7,12 @@ defmodule NervesHubCA.APITest do
   test "create device certificate" do
     serial = "123456"
 
-    {:ok, result} = NervesHubCA.create_device_certificate(serial)
+    {:ok, %{"certificate" => cert}} = NervesHubCA.create_device_certificate(serial)
 
-    cert = Map.get(result, "certificate")
+    NervesHubCA.working_dir()
+    |> Path.join("device.pem")
+    |> File.write(cert)
+
     {:ok, result} = CFSSL.certinfo(RootCA, %{certificate: cert})
 
     assert serial == get_in(result, ["subject", "organization"])

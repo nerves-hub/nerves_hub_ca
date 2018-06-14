@@ -14,11 +14,11 @@ defmodule NervesHubCA.Application do
     start_httpc()
 
     api_opts = Application.get_env(:nerves_hub_ca, :api, [])
-    cfssl_opts = Application.get_env(:nerves_hub_ca, :cfssl, [])
+    root_ca_opts = Application.get_env(:nerves_hub_ca, RootCA, [])
 
     children =
       [
-        NervesHubCA.CFSSL.child_spec(cfssl_opts, name: RootCA)
+        NervesHubCA.CFSSL.child_spec(root_ca_opts, name: RootCA)
       ] ++ api(api_opts)
 
     # See https://hexdocs.pm/elixir/Supervisor.html
