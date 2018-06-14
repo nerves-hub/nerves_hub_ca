@@ -1,18 +1,14 @@
 use Mix.Config
 
+working_dir = Path.join(File.cwd!(), "etc/cfssl")
+
 config :nerves_hub_ca, :api, port: 8443
 
-ca_cert_store = Path.join(File.cwd!(), "ssl")
+config :nerves_hub_ca, working_dir: working_dir
 
-if File.dir?(ca_cert_store) do
-  ca_cert_store = Path.expand(ca_cert_store)
-
+if File.dir?(working_dir) do
   config :nerves_hub_ca, :api,
-    cacertfile: Path.join(ca_cert_store, "ca.pem"),
-    certfile: Path.join(ca_cert_store, "ca-api.pem"),
-    keyfile: Path.join(ca_cert_store, "ca-api-key.pem")
-
-  config :nerves_hub_ca, :cfssl,
-    ca: Path.join(ca_cert_store, "ca.pem"),
-    ca_key: Path.join(ca_cert_store, "ca-key.pem")
+    cacertfile: Path.join(working_dir, "ca.pem"),
+    certfile: Path.join(working_dir, "ca-api.pem"),
+    keyfile: Path.join(working_dir, "ca-api-key.pem")
 end

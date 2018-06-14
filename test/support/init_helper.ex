@@ -1,32 +1,32 @@
 defmodule NervesHubCA.InitHelper do
-  @tmp Path.expand("test/tmp")
-
   alias NervesHubCA.CFSSL
 
   def start do
-    File.rm_rf(@tmp)
-    File.mkdir_p(@tmp)
+    path = NervesHubCA.working_dir()
+    File.rm_rf(path)
+    File.mkdir_p(path)
 
     CFSSL.wait(RootCA)
-    init_ca(@tmp)
-    init_api(@tmp)
+    init_ca(path)
+    init_api(path)
   end
 
   def init_ca(path) do
     # Create the root ca certificates
-    ca_params = %{
-      hosts: [""],
-      names: [%{O: "NervesHub", OU: "NervesHub Certificate Authority"}]
-    }
+    csr =
+      Application.get_env(:nerves_hub_ca, :cfssl)
+      |> Keyword.get(:root_ca_csr)
+      |> File.read!()
+      |> Jason.decode!()
 
-    {:ok, result} = CFSSL.init_ca(RootCA, ca_params)
+    {:ok, result} = CFSSL.init_ca(RootCA, csr)
 
     ca = Map.get(result, "certificate")
     ca_key = Map.get(result, "private_key")
 
     # Save the root certs
     path = Path.expand(path)
-    File.mkdir(path)
+    File.mkdir_p(path)
 
     ca_file = Path.join(path, "ca.pem")
     File.write!(ca_file, ca)
@@ -34,12 +34,6 @@ defmodule NervesHubCA.InitHelper do
     ca_key_file = Path.join(path, "ca-key.pem")
     File.write!(ca_key_file, ca_key)
 
-    cfssl_conf =
-      Application.get_env(:nerves_hub_ca, :cfssl, [])
-      |> Keyword.put(:ca, ca_file)
-      |> Keyword.put(:ca_key, ca_key_file)
-
-    Application.put_env(:nerves_hub_ca, :cfssl, cfssl_conf)
     restart()
   end
 
@@ -60,7 +54,7 @@ defmodule NervesHubCA.InitHelper do
 
     # Save the api certs
     path = Path.expand(path)
-    File.mkdir(path)
+    File.mkdir_p(path)
 
     cert_file = Path.join(path, "ca-api.pem")
     File.write!(cert_file, cert)
@@ -68,9 +62,7 @@ defmodule NervesHubCA.InitHelper do
     key_file = Path.join(path, "ca-api-key.pem")
     File.write!(key_file, key)
 
-    ca_file =
-      Application.get_env(:nerves_hub_ca, :cfssl)
-      |> Keyword.get(:ca)
+    ca_file = Path.join(path, "ca.pem")
 
     api_conf =
       Application.get_env(:nerves_hub_ca, :api, [])
@@ -80,10 +72,6 @@ defmodule NervesHubCA.InitHelper do
 
     Application.put_env(:nerves_hub_ca, :api, api_conf)
     restart()
-  end
-
-  def tmp() do
-    @tmp
   end
 
   defp restart() do
