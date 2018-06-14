@@ -1,0 +1,5 @@
+**/.git
+/etc
+deps
+_build
+.circleci

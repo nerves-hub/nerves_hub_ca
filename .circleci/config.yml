@@ -1,33 +1,74 @@
-install_elixir: &install_elixir
-  run:
-    name: Install Elixir
-    command: |
-      wget https://github.com/elixir-lang/elixir/releases/download/v$ELIXIR_VERSION/Precompiled.zip
-      unzip -d $HOME/elixir Precompiled.zip
-      echo 'export PATH=$HOME/elixir/bin:$PATH' >> $BASH_ENV
+defaults: &defaults
+  docker:
+    - image: nerveshub/docker-build:latest
+  working_directory: ~/repo
 
-install_cfssl: &install_cfssl
+remote_docker: &remote_docker
+  setup_remote_docker:
+    version: 17.09.0-ce
+
+docker_env: &docker_env
   run:
-    name: Install CFSSL
+    name: Set docker env
     command: |
-      go get -u github.com/cloudflare/cfssl/cmd/cfssl
+      if [ -z "$CIRCLE_TAG"]; then
+      BRANCH=$(git rev-parse --abbrev-ref HEAD)
+        SHA=$(git rev-parse --short HEAD)
+        TAG=$(echo "v.$BRANCH.$SHA" | sed 's/\//_/g')
+      else
+        TAG=$CIRCLE_TAG
+      fi
+      echo "export DOCKER_TAG=$TAG" >> $BASH_ENV
+      echo "export DOCKER_IMAGE=nerveshub/$CIRCLE_PROJECT_REPONAME" >> $BASH_ENV
+
+docker_build_test: &docker_build_test
+  run:
+    name: Build docker image
+    command: |
+      docker build \
+        -t $DOCKER_IMAGE:$DOCKER_TAG \
+        --build-arg MIX_ENV=$MIX_ENV .
+
+docker_run_test: &docker_run_test
+  run: 
+    name: Run the tests
+    command: |
+      docker run \
+        $DOCKER_IMAGE:$DOCKER_TAG \
+        mix test
+        
+docker_artifact: &docker_image_save
+  run:
+    name: Save docker image artifact
+    command: |
+      mkdir -p ~/artifacts
+      docker image save \
+        -o ~/artifacts/$CIRCLE_PROJECT_REPONAME.$DOCKER_TAG.tar \
+        $DOCKER_IMAGE:$DOCKER_TAG
 
 version: 2
 jobs:
   build:
-    docker:
-      - image: circleci/golang:1.8
-        environment:
-          MIX_ENV: test
-          ELIXIR_VERSION: 1.6.5
-
-    working_directory: ~/repo
+    <<: *defaults
+    environment:
+      MIX_ENV: test
     steps:
       - checkout
-      - <<: *install_cfssl
-      - <<: *install_elixir
-      - run: mix local.hex --force
-      - run: mix local.rebar --force
-      - run: mix deps.get
-      - run: mix test
-      - run: mix format --check-formatted
+      - <<: *remote_docker
+      - <<: *docker_env
+      - <<: *docker_build_test
+      - <<: *docker_run_test
+      - <<: *docker_image_save
+      - store_artifacts:
+          path: ~/artifacts
+          destination: docker
+
+workflows:
+  version: 2
+  build_test_deploy:
+    jobs:
+      - build:
+          context: org-global
+          filters:
+            tags:
+              only: /.*/
