@@ -9,7 +9,7 @@ defmodule NervesHubCA.APITest do
 
     {:ok, %{"certificate" => cert}} = NervesHubCA.create_device_certificate(serial)
 
-    NervesHubCA.working_dir()
+    NervesHubCA.Storage.working_dir()
     |> Path.join("device.pem")
     |> File.write(cert)
 

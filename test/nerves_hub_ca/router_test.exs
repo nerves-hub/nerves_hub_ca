@@ -19,8 +19,8 @@ defmodule NervesHubCA.RouterTest do
     server_cert = Map.get(result, "certificate")
     server_key = Map.get(result, "private_key")
 
-    server_cert_file = Path.join(NervesHubCA.working_dir(), "server.pem")
-    server_key_file = Path.join(NervesHubCA.working_dir(), "server-key.pem")
+    server_cert_file = Path.join(NervesHubCA.Storage.working_dir(), "server.pem")
+    server_key_file = Path.join(NervesHubCA.Storage.working_dir(), "server-key.pem")
 
     File.write!(server_cert_file, server_cert)
     File.write!(server_key_file, server_key)
