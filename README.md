@@ -22,7 +22,7 @@ Start an iex shell and generate the ca root certificates and
 api web server certificates:
 
 ```elixir
-iex> path = NervesHubCA.working_dir()
+iex> path = NervesHubCA.Storage.working_dir()
 iex> NervesHubCA.InitHelper.init_ca(path)
 iex> NervesHubCA.InitHelper.init_api(path)
 ```

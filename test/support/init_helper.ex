@@ -2,7 +2,7 @@ defmodule NervesHubCA.InitHelper do
   alias NervesHubCA.CFSSL
 
   def start do
-    path = NervesHubCA.working_dir()
+    path = NervesHubCA.Storage.working_dir()
     File.rm_rf(path)
     File.mkdir_p(path)
 
@@ -14,8 +14,8 @@ defmodule NervesHubCA.InitHelper do
   def init_ca(path) do
     # Create the root ca certificates
     csr =
-      Application.get_env(:nerves_hub_ca, :cfssl)
-      |> Keyword.get(:root_ca_csr)
+      Application.get_env(:nerves_hub_ca, :cfssl_defaults)
+      |> Keyword.get(:ca_csr)
       |> File.read!()
       |> Jason.decode!()
 

@@ -23,8 +23,4 @@ defmodule NervesHubCA do
 
     CFSSL.newcert(RootCA, params)
   end
-
-  def working_dir do
-    Application.get_env(:nerves_hub_ca, :working_dir, "/tmp")
-  end
 end
