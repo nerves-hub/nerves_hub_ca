@@ -11,7 +11,7 @@ docker_env: &docker_env
   run:
     name: Set docker env
     command: |
-      if [ -z "$CIRCLE_TAG"]; then
+      if [ -z "$CIRCLE_TAG" ]; then
       BRANCH=$(git rev-parse --abbrev-ref HEAD)
         SHA=$(git rev-parse --short HEAD)
         TAG=$(echo "v.$BRANCH.$SHA" | sed 's/\//_/g')
@@ -26,8 +26,15 @@ docker_build_test: &docker_build_test
     name: Build docker image
     command: |
       docker build \
+        -t $DOCKER_IMAGE:$DOCKER_TAG .
+
+docker_build_release: &docker_build_release
+  run:
+    name: Build docker image
+    command: |
+      docker build \
         -t $DOCKER_IMAGE:$DOCKER_TAG \
-        --build-arg MIX_ENV=$MIX_ENV .
+        -f rel/Dockerfile.build .
 
 docker_run_test: &docker_run_test
   run: 
@@ -48,7 +55,7 @@ docker_artifact: &docker_image_save
 
 version: 2
 jobs:
-  build:
+  build_test:
     <<: *defaults
     environment:
       MIX_ENV: test
@@ -63,12 +70,33 @@ jobs:
           path: ~/artifacts
           destination: docker
 
+  build_release:
+    <<: *defaults
+    environment:
+      MIX_ENV: prod
+    steps:
+      - checkout
+      - <<: *remote_docker
+      - <<: *docker_env
+      - <<: *docker_build_release
+      - <<: *docker_image_save
+      - store_artifacts:
+          path: ~/artifacts
+          destination: docker
+
 workflows:
   version: 2
   build_test_deploy:
     jobs:
-      - build:
+      - build_test:
           context: org-global
           filters:
             tags:
               only: /.*/
+      - build_release:
+          context: org-global
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v.*/
