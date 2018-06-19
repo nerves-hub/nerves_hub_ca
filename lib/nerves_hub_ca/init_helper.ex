@@ -2,6 +2,8 @@ defmodule NervesHubCA.InitHelper do
   alias NervesHubCA.CFSSL
 
   def start do
+    Application.ensure_all_started(:nerves_hub_ca)
+
     path = NervesHubCA.Storage.working_dir()
     File.rm_rf(path)
     File.mkdir_p(path)
@@ -9,6 +11,7 @@ defmodule NervesHubCA.InitHelper do
     CFSSL.wait(RootCA)
     init_ca(path)
     init_api(path)
+    init_server(path)
   end
 
   def init_ca(path) do
@@ -72,6 +75,27 @@ defmodule NervesHubCA.InitHelper do
 
     Application.put_env(:nerves_hub_ca, :api, api_conf)
     restart()
+  end
+
+  defp init_server(path) do
+    params = %{
+      request: %{
+        hosts: ["www.nerves-hub.org"],
+        names: [%{O: "nerves-hub"}],
+        CN: "www.nerves-hub.org"
+      }
+    }
+
+    {:ok, result} = CFSSL.newcert(RootCA, params)
+
+    server_cert = Map.get(result, "certificate")
+    server_key = Map.get(result, "private_key")
+
+    server_cert_file = Path.join(path, "server.pem")
+    server_key_file = Path.join(path, "server-key.pem")
+
+    File.write!(server_cert_file, server_cert)
+    File.write!(server_key_file, server_key)
   end
 
   defp restart() do

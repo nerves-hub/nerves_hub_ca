@@ -6,24 +6,8 @@ defmodule NervesHubCA.RouterTest do
   import NervesHubCA.Utils
 
   setup_all do
-    params = %{
-      request: %{
-        hosts: ["www.nerves-hub.org"],
-        names: [%{O: "nerves-hub"}],
-        CN: "www.nerves-hub.org"
-      }
-    }
-
-    {:ok, result} = CFSSL.newcert(RootCA, params)
-
-    server_cert = Map.get(result, "certificate")
-    server_key = Map.get(result, "private_key")
-
     server_cert_file = Path.join(NervesHubCA.Storage.working_dir(), "server.pem")
     server_key_file = Path.join(NervesHubCA.Storage.working_dir(), "server-key.pem")
-
-    File.write!(server_cert_file, server_cert)
-    File.write!(server_key_file, server_key)
 
     [
       http_opts: [
@@ -34,8 +18,7 @@ defmodule NervesHubCA.RouterTest do
           keyfile: server_key_file,
           server_name_indication: 'ca.nerves-hub.org'
         ]
-      ],
-      params: params
+      ]
     ]
   end
 
@@ -52,7 +35,16 @@ defmodule NervesHubCA.RouterTest do
 
   test "can match cfssl paths", context do
     url = url("newcert")
-    params = Jason.encode!(context[:params])
+
+    params = %{
+      request: %{
+        hosts: ["www.nerves-hub.org"],
+        names: [%{O: "nerves-hub"}],
+        CN: "www.nerves-hub.org"
+      }
+    }
+
+    params = Jason.encode!(params)
     assert {:ok, 200, _body} = http_request(:post, url, params, context[:http_opts])
   end
 

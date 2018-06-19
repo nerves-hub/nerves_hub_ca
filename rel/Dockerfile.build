@@ -28,6 +28,7 @@ ENV \
 RUN apt-get update -qq \
   && apt-get -qq -y install \
     locales \
+    awscli \
   && export LANG=en_US.UTF-8 \
   && echo $LANG UTF-8 > /etc/locale.gen \
   && locale-gen \
@@ -40,5 +41,10 @@ WORKDIR /app
 COPY --from=builder /build/_build/$MIX_ENV/rel/nerves_hub_ca/releases/*/nerves_hub_ca.tar.gz .
 RUN tar xvfz nerves_hub_ca.tar.gz > /dev/null && rm nerves_hub_ca.tar.gz
 COPY --from=cfssl /go/bin/cfssl /app/bin/cfssl
+
+COPY --from=builder /build/rel/scripts/docker-entrypoint.sh .
+RUN ["chmod", "+x", "/app/docker-entrypoint.sh"]
+
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 CMD ["nerves_hub_ca", "foreground"]

@@ -7,17 +7,20 @@ defmodule NervesHubCA.Application do
 
   use Application
 
-  alias NervesHubCA.Storage
-
   require Logger
 
   def start(_type, _args) do
     # List all child processes to be supervised
     start_httpc()
 
+    root_ca_opts =
+      Application.get_env(:nerves_hub_ca, RootCA, [])
+      |> Keyword.put_new(:port, 8888)
+      |> Keyword.put_new(:address, "127.0.0.1")
+
     children =
       [
-        NervesHubCA.CFSSL.child_spec(root_ca_opts(), name: RootCA)
+        NervesHubCA.CFSSL.child_spec(root_ca_opts, name: RootCA)
       ] ++ api()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
@@ -41,10 +44,17 @@ defmodule NervesHubCA.Application do
   end
 
   defp api() do
-    opts = Application.get_env(:nerves_hub_ca, :api, [])
+    opts =
+      Application.get_env(:nerves_hub_ca, :api, [])
+      |> Enum.reject(fn {k, v} ->
+        k in @required_api_opts and not File.exists?(v)
+      end)
+
     keys = Keyword.keys(opts)
 
     if Enum.all?(@required_api_opts, &(&1 in keys)) do
+      Logger.debug("Starting API webserver on #{opts[:port]}")
+
       [
         Plug.Adapters.Cowboy2.child_spec(
           scheme: :https,
@@ -57,20 +67,5 @@ defmodule NervesHubCA.Application do
       Logger.debug("API Webserver disabled. Missing required https opts #{inspect(missing)}")
       []
     end
-  end
-
-  defp root_ca_opts do
-    storage_adapter = Storage.adapter()
-
-    default_ca_opts =
-      Application.get_env(:nerves_hub_ca, :cfssl_defaults, [])
-      |> Keyword.put_new(:ca_config, Storage.try_fetch(storage_adapter, "ca-config.json"))
-      |> Keyword.put_new(:ca_csr, Storage.try_fetch(storage_adapter, "ca-csr.json"))
-
-    Application.put_env(:nerves_hub_ca, :cfssl_defaults, default_ca_opts)
-
-    Application.get_env(:nerves_hub_ca, RootCA, [])
-    |> Keyword.put_new(:ca, Storage.try_fetch(storage_adapter, "ca.pem"))
-    |> Keyword.put_new(:ca_key, Storage.try_fetch(storage_adapter, "ca-key.pem"))
   end
 end
