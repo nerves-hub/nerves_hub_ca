@@ -6,7 +6,9 @@ defmodule NervesHubCA.MixProject do
       app: :nerves_hub_ca,
       version: "0.1.0",
       elixir: "~> 1.6",
+      source_url: "https://github.com/nerves-hub/nerves_hub_ca",
       start_permanent: Mix.env() == :prod,
+      docs: [extras: ["README.md"], main: "readme"],
       deps: deps()
     ]
   end
@@ -26,7 +28,8 @@ defmodule NervesHubCA.MixProject do
       {:cowboy, "~> 2.1"},
       {:jason, "~> 1.0"},
       {:muontrap, "~> 0.3"},
-      {:distillery, "~> 1.5"}
+      {:distillery, "~> 1.5"},
+      {:ex_doc, "~> 0.18", only: [:test, :dev]}
     ]
   end
 end
