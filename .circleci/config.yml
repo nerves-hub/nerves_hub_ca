@@ -104,6 +104,8 @@ workflows:
               only: /.*/
       - build_release:
           context: org-global
+          requires:
+            - build_test
           filters:
             branches:
               ignore: /.*/
