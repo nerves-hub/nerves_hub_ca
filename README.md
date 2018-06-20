@@ -34,11 +34,21 @@ certificates. For example:
 # config/config.exs
 
 working_dir = Path.join(File.cwd!, "etc/cfssl")
-if File.dir?(working_dir) do
-  config :nerves_hub_ca, :api, 
-    cacertfile: Path.join(working_dir, "ca.pem"),
-    certfile: Path.join(working_dir, "ca-api.pem"),
-    keyfile: Path.join(working_dir, "ca-api-key.pem")
+config :nerves_hub_ca, working_dir: working_dir
+
+config :nerves_hub_ca, :cfssl_defaults,
+  ca_config: Path.join(working_dir, "ca-config.json"),
+  ca_csr: Path.join(working_dir, "root-ca-csr.json"),
+  ca: Path.join(working_dir, "ca.pem"),
+  ca_key: Path.join(working_dir, "ca-key.pem")
+
+config :nerves_hub_ca, :api,
+  port: 8443,
+  verify: :verify_peer,
+  fail_if_no_peer_cert: true,
+  cacertfile: Path.join(working_dir, "ca.pem"),
+  certfile: Path.join(working_dir, "ca-api.pem"),
+  keyfile: Path.join(working_dir, "ca-api-key.pem")
 end
 ```
 
@@ -66,7 +76,7 @@ config :nerves_hub_ca, :api,
 
 # API
 
-* Route: `/device`
+* Route: `/create_device_certificate`
   * Method: `POST`
   * Parameters:
     * `serial`: The manufacture serial number.
@@ -86,7 +96,26 @@ Information about API endpoints can be found in the [CFSSL Docs](https://github.
 
 The NervesHubCA test suite will create a certificate authority and generate a
 trusted CA API certificate before running any of the tests. Dependents can bring
-up a clean CA by adding `NervesHubCA.InitHelper.start()` to the `test/test_helper.exs`
-file. 
+up a clean CA by invoking `NervesHubCA.InitHelper.start()` in the mix aliases.
 
-See `test/support/init_helper.ex` for more information.
+```elixir
+# mix.exs
+#...
+  def project do
+    [
+      #...
+      aliases: aliases()
+    ]
+  end
+
+  defp aliases do
+    [
+      test: [&init_ca/1, "test"]
+    ]
+  end
+
+  defp init_ca(_) do
+    NervesHubCA.InitHelper.start()
+  end
+#...
+```
