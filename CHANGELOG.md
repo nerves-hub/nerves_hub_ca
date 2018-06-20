@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.1
+  
+  * Enhancements
+    * Added `/health_check` page.
+
 ## v0.1.0
 
 Initial Release.
