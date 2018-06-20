@@ -53,6 +53,14 @@ docker_artifact: &docker_image_save
         -o ~/artifacts/$CIRCLE_PROJECT_REPONAME.$DOCKER_TAG.tar \
         $DOCKER_IMAGE:$DOCKER_TAG
 
+docker_push: &docker_push
+  run: 
+    name: Push docker image to dockerhub
+    command: |
+      docker login -u $DOCKER_USER -p $DOCKER_PASS
+      docker push \
+        $DOCKER_IMAGE:$DOCKER_TAG
+
 version: 2
 jobs:
   build_test:
@@ -83,6 +91,7 @@ jobs:
       - store_artifacts:
           path: ~/artifacts
           destination: docker
+      - <<: *docker_push
 
 workflows:
   version: 2
