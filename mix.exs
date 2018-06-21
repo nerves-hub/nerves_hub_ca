@@ -8,7 +8,7 @@ defmodule NervesHubCA.MixProject do
       elixir: "~> 1.6",
       source_url: "https://github.com/nerves-hub/nerves_hub_ca",
       start_permanent: Mix.env() == :prod,
-      docs: [extras: ["README.md"], main: "readme"],
+      docs: docs(),
       deps: deps()
     ]
   end
@@ -18,6 +18,16 @@ defmodule NervesHubCA.MixProject do
     [
       extra_applications: [:logger, :inets],
       mod: {NervesHubCA.Application, []}
+    ]
+  end
+
+  defp docs do
+    [
+      extras: [
+        "README.md",
+        "docs/Generating Certificates with CFSSL.md"
+      ], 
+      main: "readme"
     ]
   end
 
