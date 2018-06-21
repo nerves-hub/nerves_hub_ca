@@ -1,6 +1,30 @@
 # Changelog
 
-## v0.2.0-dev
+## v0.2.0
+
+* Enhancements
+  * Added `/health_check` to router to return 200.
+  * Removed setting the docker ENTRYPOINT in the image.
+    
+    This makes it easier to make a container for use in dev and test.
+    You can bind mount a directory containing your cfssl configs and 
+    certificates.
+
+    ```
+    docker run --rm \
+      --mount type=bind,src=`pwd`/test/fixtures/ssl,dst=/etc/cfssl \
+      -p 8443:8443 \
+      nerveshub/nerves_hub_ca:v0.2.0
+    ```
+
+    Running in production, you can set the entry point to sync the data.
+    For example, from S3
+    ```
+    docker run --rm \
+      --entrypoint=/app/s3-entrypoint.sh \
+      -p 8443:8443 \
+      nerveshub/nerves_hub_ca:v0.2.0
+    ```
   
 ## v0.1.0
 
