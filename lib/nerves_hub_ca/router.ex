@@ -33,6 +33,10 @@ defmodule NervesHubCA.Router do
   plug(:match)
   plug(:dispatch)
 
+  get "health_check" do
+    send_resp(conn, 200, "ok")
+  end
+
   post "create_device_certificate" do
     opts = Plug.Parsers.init(@plug_parsers_opts)
     conn = Plug.Parsers.call(conn, opts)
