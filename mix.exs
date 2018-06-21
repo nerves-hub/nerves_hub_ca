@@ -26,7 +26,7 @@ defmodule NervesHubCA.MixProject do
       extras: [
         "README.md",
         "docs/Generating Certificates with CFSSL.md"
-      ], 
+      ],
       main: "readme"
     ]
   end
