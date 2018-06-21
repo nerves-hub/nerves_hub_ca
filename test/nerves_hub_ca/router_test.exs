@@ -58,6 +58,11 @@ defmodule NervesHubCA.RouterTest do
     assert {:error, _reason} = http_request(:post, url, "")
   end
 
+  test "health check returns 200 ok", context do
+    url = url("health_check")
+    assert {:ok, 200, "ok"} = http_request(:get, url, "", context[:http_opts])
+  end
+
   defp url(endpoint) do
     "https://localhost:8443/" <> endpoint
   end
