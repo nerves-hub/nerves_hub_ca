@@ -4,7 +4,7 @@ defmodule NervesHubCA.MixProject do
   def project do
     [
       app: :nerves_hub_ca,
-      version: "0.1.0",
+      version: "0.2.0-dev",
       elixir: "~> 1.6",
       source_url: "https://github.com/nerves-hub/nerves_hub_ca",
       start_permanent: Mix.env() == :prod,
