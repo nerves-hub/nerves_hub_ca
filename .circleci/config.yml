@@ -43,7 +43,15 @@ docker_run_test: &docker_run_test
       docker run \
         $DOCKER_IMAGE:$DOCKER_TAG \
         mix test
-        
+
+docker_check_formatting: &docker_check_formatting
+  run: 
+    name: Check formatting
+    command: |
+      docker run \
+        $DOCKER_IMAGE:$DOCKER_TAG \
+        mix format --check-formatted
+
 docker_artifact: &docker_image_save
   run:
     name: Save docker image artifact
@@ -73,6 +81,7 @@ jobs:
       - <<: *docker_env
       - <<: *docker_build_test
       - <<: *docker_run_test
+      - <<: *docker_check_formatting
       - <<: *docker_image_save
       - store_artifacts:
           path: ~/artifacts
