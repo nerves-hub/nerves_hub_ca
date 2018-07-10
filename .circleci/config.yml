@@ -67,14 +67,6 @@ update_task: &update_task
       TASK=$(rel/scripts/ecs-update-task.sh nerves_hub_ca $DOCKER_IMAGE:$DOCKER_TAG)
       echo "export ECS_TASK=$TASK" >> $BASH_ENV
 
-migrate: &migrate
-  run:
-    name: Run Migrations
-    command: |
-      rel/scripts/ecs-migrate.sh \
-        nerves-hub-ca \
-        $ECS_TASK
-
 deploy: &deploy
   run:
     name: Deploy to production
@@ -124,7 +116,6 @@ jobs:
       - checkout
       - <<: *docker_env
       - <<: *update_task
-      - <<: *migrate
       - <<: *deploy
       - <<: *send_notifications
 
