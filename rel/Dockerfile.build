@@ -1,10 +1,11 @@
-FROM cfssl/cfssl:1.3.2 as cfssl
+FROM nerveshub/cfssl:1.3.2 as cfssl
 
 # Elixir build container
-FROM elixir:1.6 as builder
+FROM bitwalker/alpine-elixir:1.6.6 as builder
 
 ENV MIX_ENV=prod
 
+RUN apk --no-cache add make gcc musl-dev
 RUN mix local.hex --force && mix local.rebar --force
 RUN mkdir /build
 ADD . /build
@@ -14,25 +15,15 @@ RUN mix deps.clean --all && mix deps.get
 RUN mix release --env=$MIX_ENV
 
 # Release Container
-FROM elixir:1.6 as release
+FROM alpine:3.8 as release
 
 ENV MIX_ENV=prod
-
 ENV REPLACE_OS_VARS true
+ENV LC_ALL=en_US.UTF-8
 
-ENV \
-  LANG=C.UTF-8 \
-  LC_ALL=en_US.UTF-8 \
-  PATH="/app/bin:${PATH}"
-
-RUN apt-get update -qq \
-  && apt-get -qq -y install \
-    locales \
-    awscli \
-  && export LANG=en_US.UTF-8 \
-  && echo $LANG UTF-8 > /etc/locale.gen \
-  && locale-gen \
-  && update-locale LANG=$LANG
+ARG AWS_CLI_VERSION=1.15.56
+RUN apk --no-cache add bash openssl python py-pip && \
+    pip install --no-cache-dir awscli==$AWS_CLI_VERSION
 
 EXPOSE 8443
 
@@ -40,7 +31,7 @@ WORKDIR /app
 
 COPY --from=builder /build/_build/$MIX_ENV/rel/nerves_hub_ca/releases/*/nerves_hub_ca.tar.gz .
 RUN tar xvfz nerves_hub_ca.tar.gz > /dev/null && rm nerves_hub_ca.tar.gz
-COPY --from=cfssl /go/bin/cfssl /app/bin/cfssl
+COPY --from=cfssl /usr/local/bin/cfssl /usr/local/bin/cfssl
 
 COPY --from=builder /build/rel/scripts/s3-entrypoint.sh .
 RUN ["chmod", "+x", "/app/s3-entrypoint.sh"]
