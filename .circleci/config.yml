@@ -1,6 +1,6 @@
 defaults: &defaults
   docker:
-    - image: nerveshub/docker-build:latest
+    - image: nerveshub/docker-build:alpine-3.8
   working_directory: ~/repo
 
 remote_docker: &remote_docker
@@ -52,6 +52,22 @@ docker_check_formatting: &docker_check_formatting
         $DOCKER_IMAGE:$DOCKER_TAG \
         mix format --check-formatted
 
+docker_save: &docker_save
+  run:
+    name: Save docker images
+    command: |
+      mkdir -p /docker
+      docker save \
+        nerveshub/$APP_NAME:$DOCKER_TAG \
+        -o /docker/$APP_NAME-$DOCKER_TAG.tar
+
+docker_import: &docker_import
+  run:
+    name: Import docker images
+    command: |
+      docker load \
+        -i /docker/$APP_NAME-$DOCKER_TAG.tar
+
 docker_push: &docker_push
   run: 
     name: Push docker image to dockerhub
@@ -60,21 +76,17 @@ docker_push: &docker_push
       docker push \
         $DOCKER_IMAGE:$DOCKER_TAG
 
-update_task: &update_task
-  run: 
-    name: Update ECS Task
-    command: |
-      TASK=$(rel/scripts/ecs-update-task.sh nerves_hub_ca $DOCKER_IMAGE:$DOCKER_TAG)
-      echo "export ECS_TASK=$TASK" >> $BASH_ENV
-
 deploy: &deploy
   run:
     name: Deploy to production
     command: |
-      rel/scripts/ecs-deploy.sh \
-        nerves-hub \
-        nerves-hub-ca \
-        $ECS_TASK
+      ecs-deploy \
+        -c nerves-hub \
+        -n nerves-hub-ca \
+        -i nerveshub/nerves_hub_ca:$DOCKER_TAG \
+        -t 600 \
+        --enable-rollback \
+        --max-definitions 10
 
 send_notifications: &send_notifications
   run: 
@@ -94,6 +106,7 @@ jobs:
     steps:
       - checkout
       - <<: *remote_docker
+      - run: echo "export APP_NAME=nerves_hub_ca" >> $BASH_ENV
       - <<: *docker_env
       - <<: *docker_build_test
       - <<: *docker_run_test
@@ -106,16 +119,26 @@ jobs:
     steps:
       - checkout
       - <<: *remote_docker
+      - run: echo "export APP_NAME=nerves_hub_ca" >> $BASH_ENV
       - <<: *docker_env
       - <<: *docker_build_release
-      - <<: *docker_push
+      - <<: *docker_save
+      - save_cache:
+          key: docker-{{ .Branch }}-{{ .Revision }}
+          paths: "/docker"
 
   deploy:
     <<: *defaults
     steps:
       - checkout
+      - <<: *remote_docker
+      - run: echo "export APP_NAME=nerves_hub_ca" >> $BASH_ENV
       - <<: *docker_env
-      - <<: *update_task
+      - restore_cache:
+          keys:
+            - docker-{{ .Branch }}-{{ .Revision }}
+      - <<: *docker_import
+      - <<: *docker_push
       - <<: *deploy
       - <<: *send_notifications
 
@@ -128,9 +151,6 @@ workflows:
             context: org-global
             requires:
               - test
-            filters:
-              branches:
-                only: master
         - deploy:
             context: org-global
             requires:
