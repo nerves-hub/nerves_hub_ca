@@ -15,15 +15,7 @@ RUN mix deps.clean --all && mix deps.get
 RUN mix release --env=$MIX_ENV
 
 # Release Container
-FROM alpine:3.8 as release
-
-ENV MIX_ENV=prod
-ENV REPLACE_OS_VARS true
-ENV LC_ALL=en_US.UTF-8
-
-ARG AWS_CLI_VERSION=1.15.56
-RUN apk --no-cache add bash openssl python py-pip && \
-    pip install --no-cache-dir awscli==$AWS_CLI_VERSION
+FROM nerveshub/runtime:alpine-3.8 as release
 
 EXPOSE 8443
 
@@ -36,4 +28,5 @@ COPY --from=cfssl /usr/local/bin/cfssl /usr/local/bin/cfssl
 COPY --from=builder /build/rel/scripts/s3-entrypoint.sh .
 RUN ["chmod", "+x", "/app/s3-entrypoint.sh"]
 
-CMD ["nerves_hub_ca", "foreground"]
+ENTRYPOINT ["/app/s3-entrypoint.sh"]
+CMD ["./bin/nerves_hub_ca", "foreground"]
