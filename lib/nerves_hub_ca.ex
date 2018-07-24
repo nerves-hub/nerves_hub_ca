@@ -18,7 +18,30 @@ defmodule NervesHubCA do
         names: [%{O: serial}],
         CN: "NervesHub Device Certificate"
       },
-      profile: "client"
+      profile: "device"
+    }
+
+    CFSSL.newcert(RootCA, params)
+  end
+
+  @doc """
+  Create a new certificate for a user.
+
+  The supplied username will be stored
+  in the Organization of the Distinguished Name.
+
+  Parameters:
+    `username`: The username for the certificate
+  """
+  @spec create_user_certificate(binary) :: CFSSL.result()
+  def create_user_certificate(username) do
+    params = %{
+      request: %{
+        hosts: [""],
+        names: [%{O: username}],
+        CN: "NervesHub User Certificate"
+      },
+      profile: "user"
     }
 
     CFSSL.newcert(RootCA, params)

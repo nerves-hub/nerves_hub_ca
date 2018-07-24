@@ -16,14 +16,22 @@
                 "server auth"
             ]
         },
-        "client": {
+        "device": {
             "expiry": "730h",
             "usages": [
                 "signing",
                 "key encipherment",
                 "client auth"
             ]
-        }
+        },
+        "user": {
+          "expiry": "730h",
+          "usages": [
+              "signing",
+              "key encipherment",
+              "client auth"
+          ]
+      }
     }
   }
 }
