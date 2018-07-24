@@ -45,7 +45,7 @@ defmodule NervesHubCA.InitHelper do
     server_params = %{
       request: %{
         hosts: ["ca.nerves-hub.org"],
-        names: [%{O: "nerves-hub"}],
+        names: [%{O: "NervesHub"}],
         CN: "ca.nerves-hub.org"
       }
     }
@@ -77,12 +77,12 @@ defmodule NervesHubCA.InitHelper do
     restart()
   end
 
-  defp init_server(path) do
+  def init_server(path) do
     params = %{
       request: %{
-        hosts: ["www.nerves-hub.org"],
-        names: [%{O: "nerves-hub"}],
-        CN: "www.nerves-hub.org"
+        hosts: ["device.nerves-hub.org"],
+        names: [%{O: "NervesHub"}],
+        CN: "device.nerves-hub.org"
       }
     }
 
