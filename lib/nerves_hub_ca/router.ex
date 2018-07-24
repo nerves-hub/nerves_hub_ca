@@ -51,6 +51,20 @@ defmodule NervesHubCA.Router do
     end
   end
 
+  post "create_user_certificate" do
+    opts = Plug.Parsers.init(@plug_parsers_opts)
+    conn = Plug.Parsers.call(conn, opts)
+
+    case Map.get(conn.body_params, "username") do
+      nil ->
+        send_resp(conn, 400, "Missing parameter: username")
+
+        username ->
+        {:ok, result} = NervesHubCA.create_user_certificate(username)
+        send_resp(conn, 200, Jason.encode!(result))
+    end
+  end
+
   match _ do
     method = conn.method |> String.downcase() |> String.to_atom()
     path = conn.path_info |> List.last()

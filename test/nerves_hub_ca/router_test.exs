@@ -33,6 +33,17 @@ defmodule NervesHubCA.RouterTest do
     assert {:ok, 200, _body} = http_request(:post, url, params, context[:http_opts])
   end
 
+  test "can create user certificates", context do
+    url = url("create_user_certificate")
+
+    params = %{
+      username: "test@test.com"
+    }
+
+    params = Jason.encode!(params)
+    assert {:ok, 200, _body} = http_request(:post, url, params, context[:http_opts])
+  end
+
   test "can match cfssl paths", context do
     url = url("newcert")
 
@@ -64,6 +75,6 @@ defmodule NervesHubCA.RouterTest do
   end
 
   defp url(endpoint) do
-    "https://localhost:8443/" <> endpoint
+    "https://localhost:4443/" <> endpoint
   end
 end

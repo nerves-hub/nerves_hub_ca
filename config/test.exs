@@ -11,11 +11,11 @@ config :nerves_hub_ca, :cfssl_defaults,
   ca_key: Path.join(working_dir, "ca-key.pem")
 
 config :nerves_hub_ca, :api,
-  port: 8443,
+  port: 4443,
   verify: :verify_peer,
   fail_if_no_peer_cert: true,
   cacertfile: Path.join(working_dir, "ca.pem"),
   certfile: Path.join(working_dir, "ca-api.pem"),
   keyfile: Path.join(working_dir, "ca-api-key.pem")
 
-config :logger, level: :info
+config :logger, level: :error

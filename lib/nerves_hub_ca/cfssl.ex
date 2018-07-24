@@ -133,7 +133,7 @@ defmodule NervesHubCA.CFSSL do
         to_string(port),
         "-config",
         ca_config
-      ])
+      ], [])
 
     send(self(), :init)
 
