@@ -121,19 +121,23 @@ defmodule NervesHubCA.CFSSL do
     ca_csr = Keyword.get(opts, :ca_csr)
 
     {:ok, pid} =
-      MuonTrap.Daemon.start_link("cfssl", [
-        "serve",
-        "-ca",
-        ca,
-        "-ca-key",
-        ca_key,
-        "-address",
-        address,
-        "-port",
-        to_string(port),
-        "-config",
-        ca_config
-      ], [])
+      MuonTrap.Daemon.start_link(
+        "cfssl",
+        [
+          "serve",
+          "-ca",
+          ca,
+          "-ca-key",
+          ca_key,
+          "-address",
+          address,
+          "-port",
+          to_string(port),
+          "-config",
+          ca_config
+        ],
+        []
+      )
 
     send(self(), :init)
 

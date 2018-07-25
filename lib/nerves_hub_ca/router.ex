@@ -59,8 +59,22 @@ defmodule NervesHubCA.Router do
       nil ->
         send_resp(conn, 400, "Missing parameter: username")
 
-        username ->
+      username ->
         {:ok, result} = NervesHubCA.create_user_certificate(username)
+        send_resp(conn, 200, Jason.encode!(result))
+    end
+  end
+
+  post "create_server_certificate" do
+    opts = Plug.Parsers.init(@plug_parsers_opts)
+    conn = Plug.Parsers.call(conn, opts)
+
+    case Map.get(conn.body_params, "hostname") do
+      nil ->
+        send_resp(conn, 400, "Missing parameter: hostname")
+
+      hostname ->
+        {:ok, result} = NervesHubCA.create_server_certificate(hostname)
         send_resp(conn, 200, Jason.encode!(result))
     end
   end

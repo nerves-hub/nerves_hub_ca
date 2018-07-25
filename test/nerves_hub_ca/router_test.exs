@@ -44,6 +44,17 @@ defmodule NervesHubCA.RouterTest do
     assert {:ok, 200, _body} = http_request(:post, url, params, context[:http_opts])
   end
 
+  test "can create server certificates", context do
+    url = url("create_server_certificate")
+
+    params = %{
+      hostname: "api.nerves-hub.org"
+    }
+
+    params = Jason.encode!(params)
+    assert {:ok, 200, _body} = http_request(:post, url, params, context[:http_opts])
+  end
+
   test "can match cfssl paths", context do
     url = url("newcert")
 

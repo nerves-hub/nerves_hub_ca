@@ -46,4 +46,24 @@ defmodule NervesHubCA do
 
     CFSSL.newcert(RootCA, params)
   end
+
+  @doc """
+  Create a new certificate for a server.
+
+  Parameters:
+    `host`: The hostname for the server
+  """
+  @spec create_server_certificate(binary) :: CFSSL.result()
+  def create_server_certificate(host) do
+    params = %{
+      request: %{
+        hosts: [host],
+        names: [%{O: "NervesHub"}],
+        CN: host
+      },
+      profile: "server"
+    }
+
+    CFSSL.newcert(RootCA, params)
+  end
 end
