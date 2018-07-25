@@ -31,4 +31,18 @@ defmodule NervesHubCA.APITest do
 
     assert username == get_in(result, ["subject", "organization"])
   end
+
+  test "create server certificate" do
+    hostname = "api.nerves-hub.org"
+
+    {:ok, %{"certificate" => cert}} = NervesHubCA.create_server_certificate(hostname)
+
+    NervesHubCA.Storage.working_dir()
+    |> Path.join("api.pem")
+    |> File.write(cert)
+
+    {:ok, result} = CFSSL.certinfo(RootCA, %{certificate: cert})
+
+    assert hostname == get_in(result, ["subject", "common_name"])
+  end
 end
