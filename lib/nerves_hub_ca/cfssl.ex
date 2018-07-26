@@ -117,8 +117,8 @@ defmodule NervesHubCA.CFSSL do
 
     ca = Keyword.get(opts, :ca, "")
     ca_key = Keyword.get(opts, :ca_key, "")
-    ca_config = Keyword.get(opts, :ca_config, "")
-    ca_csr = Keyword.get(opts, :ca_csr)
+    ca_config = Path.join(config_dir(), "ca-config.json")
+    ca_csr = Path.join(config_dir(), "root-ca-csr.json")
 
     {:ok, pid} =
       MuonTrap.Daemon.start_link(
@@ -212,5 +212,11 @@ defmodule NervesHubCA.CFSSL do
       error ->
         error
     end
+  end
+
+  defp config_dir do
+    :code.priv_dir(:nerves_hub_ca)
+    |> to_string()
+    |> Path.join("cfssl")
   end
 end

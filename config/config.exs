@@ -13,13 +13,9 @@ working_dir =
 
 working_dir = System.get_env("NERVES_HUB_CA_DIR") || working_dir
 
-IO.puts("WorkingDir: #{working_dir}")
-
 config :nerves_hub_ca, working_dir: working_dir
 
 config :nerves_hub_ca, :cfssl_defaults,
-  ca_config: Path.expand("priv/cfssl/ca-config.json"),
-  ca_csr: Path.expand("priv/cfssl/root-ca-csr.json"),
   ca: Path.join(working_dir, "root-ca.pem"),
   ca_key: Path.join(working_dir, "ca-key.pem")
 
