@@ -8,16 +8,11 @@ defmodule NervesHubCA.RouterTest do
     server_cert_file = Path.join(NervesHubCA.Storage.working_dir(), "ca-client.pem")
     server_key_file = Path.join(NervesHubCA.Storage.working_dir(), "ca-client-key.pem")
 
-    ca_cert_files = [
-      Path.join(NervesHubCA.Storage.working_dir(), "root-ca.pem"),
-      Path.join(NervesHubCA.Storage.working_dir(), "intermediate-server-ca.pem")
-    ]
-
     [
       http_opts: [
         ssl: [
           verify: :verify_peer,
-          cacerts: cert_files_to_der(ca_cert_files),
+          cacertfile: Path.join(NervesHubCA.Storage.working_dir(), "ca.pem"),
           certfile: server_cert_file,
           keyfile: server_key_file,
           server_name_indication: 'ca.nerves-hub.org'

@@ -12,10 +12,16 @@ defmodule Mix.Tasks.NervesHubCa.Init do
 
     File.mkdir_p(path)
 
-    gen_ca_cert("root-ca", path)
-    gen_int_ca_cert("intermediate-server-ca", path)
-    gen_int_ca_cert("intermediate-device-ca", path)
-    gen_int_ca_cert("intermediate-user-ca", path)
+    %{cert: root_ca} = gen_ca_cert("root-ca", path)
+    %{cert: server_ca} = gen_int_ca_cert("intermediate-server-ca", path)
+    %{cert: device_ca} = gen_int_ca_cert("intermediate-device-ca", path)
+    %{cert: user_ca} = gen_int_ca_cert("intermediate-user-ca", path)
+    
+    # Create a pem of the ca trust chain
+    ca_cert = Path.join(path, "ca.pem")
+    [root_ca, server_ca, device_ca, user_ca]
+    |> Enum.each(&File.write!(ca_cert, File.read!(&1), [:append]))
+    
     gen_server_cert("ca.nerves-hub.org", path)
     gen_client_cert("ca-client", path)
   end

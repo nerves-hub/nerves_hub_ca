@@ -3,7 +3,7 @@ defmodule NervesHubCA.Application do
   # for more information on OTP Applications
   @moduledoc false
 
-  @required_api_opts [:cacerts, :certfile, :keyfile]
+  @required_api_opts [:cacertfile, :certfile, :keyfile]
 
   use Application
 
@@ -64,11 +64,11 @@ defmodule NervesHubCA.Application do
     if Enum.all?(@required_api_opts, &(&1 in keys)) do
       Logger.debug("Starting API webserver on #{opts[:port]}")
 
-      ca_certs =
-        Keyword.get(opts, :cacerts, [])
-        |> NervesHubCA.Utils.cert_files_to_der()
+      # ca_certs =
+      #   Keyword.get(opts, :cacerts, [])
+      #   |> NervesHubCA.Utils.cert_files_to_der()
 
-      opts = Keyword.put(opts, :cacerts, ca_certs) |> IO.inspect()
+      # opts = Keyword.put(opts, :cacerts, ca_certs) |> IO.inspect()
 
       [
         Plug.Adapters.Cowboy2.child_spec(

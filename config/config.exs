@@ -11,6 +11,8 @@ working_dir =
     :test -> Path.expand("../test/tmp", __DIR__)
   end
 
+working_dir = System.get_env("NERVES_HUB_CA_DIR") || working_dir
+
 config :nerves_hub_ca, working_dir: working_dir
 
 config :nerves_hub_ca, :cfssl_defaults,
@@ -24,10 +26,7 @@ config :nerves_hub_ca, :api,
   port: 8443,
   verify: :verify_peer,
   fail_if_no_peer_cert: true,
-  cacerts: [
-    Path.join(working_dir, "root-ca.pem"),
-    Path.join(working_dir, "intermediate-server-ca.pem")
-  ],
+  cacertfile: Path.join(working_dir, "ca.pem"),
   certfile: Path.join(working_dir, "ca.nerves-hub.org.pem"),
   keyfile: Path.join(working_dir, "ca.nerves-hub.org-key.pem")
 
