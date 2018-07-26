@@ -1,5 +1,6 @@
 defmodule NervesHubCA do
   alias NervesHubCA.CFSSL
+  alias NervesHubCA.Intermediate.CA
 
   @doc """
   Create a new certificate for a device.
@@ -21,7 +22,7 @@ defmodule NervesHubCA do
       profile: "device"
     }
 
-    CFSSL.newcert(RootCA, params)
+    CFSSL.newcert(CA.Device, params)
   end
 
   @doc """
@@ -44,7 +45,7 @@ defmodule NervesHubCA do
       profile: "user"
     }
 
-    CFSSL.newcert(RootCA, params)
+    CFSSL.newcert(CA.User, params)
   end
 
   @doc """
@@ -64,6 +65,6 @@ defmodule NervesHubCA do
       profile: "server"
     }
 
-    CFSSL.newcert(RootCA, params)
+    CFSSL.newcert(CA.Server, params)
   end
 end

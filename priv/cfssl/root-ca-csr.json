@@ -1,0 +1,16 @@
+{
+  "CN": "NervesHub Root CA",
+  "key": {
+    "algo": "ecdsa",
+    "size": 256
+  },
+  "names": [
+    {
+      "O": "NervesHub",
+      "OU": "NervesHub Certificate Authority"
+    }
+  ],
+  "ca": {
+    "expiry": "262800h"
+  } 
+}

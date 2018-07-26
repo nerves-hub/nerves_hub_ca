@@ -112,7 +112,7 @@ defmodule NervesHubCA.CFSSL do
   def init(opts) do
     opts = default_opts(opts)
 
-    address = opts[:address]
+    address = opts[:address] || "127.0.0.1"
     port = opts[:port]
 
     ca = Keyword.get(opts, :ca, "")

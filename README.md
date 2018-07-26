@@ -16,41 +16,40 @@ NervesHubCA will bring up a supervised instance of `cfssl` and attempt to start
 a `cowboy2` HTTPS web server. Starting the web server requires that the `cfssl`
 instance started with a ca certificate and a new certificate is generated.
 
+# Certificate Chain Structure
+```
+                   --------------
+                  |   Root CA    |
+                   --------------
+                /         |        \
+ --------------    --------------    --------------
+| Intermediate |  | Intermediate |  | Intermediate |
+|   User CA    |  |  Device CA   |  |  Server CA   | 
+ --------------    --------------    --------------
+       |                  |                 |        \
+ --------------    --------------    --------------    ---------------
+|     User     |  |    Device    |  |    Server    |  |   CA Client   |
+|  Certificate |  |  Certificate |  |  Certificate |  |  Certificate  |
+ --------------    --------------    --------------    ---------------
+```
+
 ## Initial development environment setup
 
-Start an iex shell and generate the ca root certificates and 
-api web server certificates:
+Generate initial certificates
 
-```elixir
-iex> path = NervesHubCA.Storage.working_dir()
-iex> NervesHubCA.InitHelper.init_ca(path)
-iex> NervesHubCA.InitHelper.init_api(path)
+```bash
+mix nerves_hub_ca.init
+```
+
+This will generate the initial certificate chain and place it in `{cwd}/etc/cfssl`.
+You can specify a different location by passing the `--path` option:
+
+```bash
+mix nerves_hub_ca.init --path /tmp
 ```
 
 Finally, configure the `:nerves_hub_ca` application with the location of the
-certificates. For example: 
-
-```elixir
-# config/config.exs
-
-working_dir = Path.join(File.cwd!, "etc/cfssl")
-config :nerves_hub_ca, working_dir: working_dir
-
-config :nerves_hub_ca, :cfssl_defaults,
-  ca_config: Path.join(working_dir, "ca-config.json"),
-  ca_csr: Path.join(working_dir, "root-ca-csr.json"),
-  ca: Path.join(working_dir, "ca.pem"),
-  ca_key: Path.join(working_dir, "ca-key.pem")
-
-config :nerves_hub_ca, :api,
-  port: 8443,
-  verify: :verify_peer,
-  fail_if_no_peer_cert: true,
-  cacertfile: Path.join(working_dir, "ca.pem"),
-  certfile: Path.join(working_dir, "ca-api.pem"),
-  keyfile: Path.join(working_dir, "ca-api-key.pem")
-end
-```
+certificates. See the NervesHubCA config.exs for examples.
 
 ## Configuring the API webserver
 
@@ -96,7 +95,7 @@ Information about API endpoints can be found in the [CFSSL Docs](https://github.
 
 The NervesHubCA test suite will create a certificate authority and generate a
 trusted CA API certificate before running any of the tests. Dependents can bring
-up a clean CA by invoking `NervesHubCA.InitHelper.start()` in the mix aliases.
+up a clean CA by altering the mix aliases.
 
 ```elixir
 # mix.exs
@@ -104,18 +103,8 @@ up a clean CA by invoking `NervesHubCA.InitHelper.start()` in the mix aliases.
   def project do
     [
       #...
-      aliases: aliases()
+      aliases: [test: ["nerves_hub_ca.init", "test"]]
     ]
-  end
-
-  defp aliases do
-    [
-      test: [&init_ca/1, "test"]
-    ]
-  end
-
-  defp init_ca(_) do
-    NervesHubCA.InitHelper.start()
   end
 #...
 ```

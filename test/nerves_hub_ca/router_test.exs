@@ -2,18 +2,22 @@ defmodule NervesHubCA.RouterTest do
   use ExUnit.Case
   doctest NervesHubCA.Router
 
-  alias NervesHubCA.CFSSL
   import NervesHubCA.Utils
 
   setup_all do
-    server_cert_file = Path.join(NervesHubCA.Storage.working_dir(), "server.pem")
-    server_key_file = Path.join(NervesHubCA.Storage.working_dir(), "server-key.pem")
+    server_cert_file = Path.join(NervesHubCA.Storage.working_dir(), "ca-client.pem")
+    server_key_file = Path.join(NervesHubCA.Storage.working_dir(), "ca-client-key.pem")
+
+    ca_cert_files = [
+      Path.join(NervesHubCA.Storage.working_dir(), "root-ca.pem"),
+      Path.join(NervesHubCA.Storage.working_dir(), "intermediate-server-ca.pem")
+    ]
 
     [
       http_opts: [
         ssl: [
           verify: :verify_peer,
-          cacertfile: CFSSL.ca_cert(RootCA),
+          cacerts: cert_files_to_der(ca_cert_files),
           certfile: server_cert_file,
           keyfile: server_key_file,
           server_name_indication: 'ca.nerves-hub.org'
@@ -86,6 +90,6 @@ defmodule NervesHubCA.RouterTest do
   end
 
   defp url(endpoint) do
-    "https://localhost:4443/" <> endpoint
+    "https://localhost:8443/" <> endpoint
   end
 end

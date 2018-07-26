@@ -29,4 +29,17 @@ defmodule NervesHubCA.Utils do
         error
     end
   end
+
+  def cert_files_to_der(cert_files) when is_list(cert_files) do
+    Enum.reduce(cert_files, [], fn cert_file, acc ->
+      case File.read(cert_file) do
+        {:ok, cert} ->
+          [{:Certificate, cert, _}] = :public_key.pem_decode(cert)
+          [cert | acc]
+
+        _ ->
+          acc
+      end
+    end)
+  end
 end

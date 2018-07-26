@@ -1,5 +1,40 @@
 # Changelog
 
+## v0.3.0
+
+The certificate structure has changed.
+Prior to this version, all certificates were signed off the main root certificate.
+This version will generate a root certificate and several intermediate root 
+certificates for use with signing users, devices, servers, and ca clients.
+
+```
+                   --------------
+                  |   Root CA    |
+                   --------------
+                /         |        \
+ --------------    --------------    --------------
+| Intermediate |  | Intermediate |  | Intermediate |
+|   User CA    |  |  Device CA   |  |  Server CA   | 
+ --------------    --------------    --------------
+       |                  |                 |        \
+ --------------    --------------    --------------    ---------------
+|     User     |  |    Device    |  |    Server    |  |   CA Client   |
+|  Certificate |  |  Certificate |  |  Certificate |  |  Certificate  |
+ --------------    --------------    --------------    ---------------
+```
+
+
+* Enhancements
+  * Added mix task for generating initial certificate structure.
+  * Start CFSSL processes configured for each certificate type.
+
+* Certificate Expirations
+  * Root CA: 30 years
+  * Intermediate CA: 10 years
+  * Server certificate: 1 year
+  * User certificate: 1 year
+  * Device certificate: 5 years
+
 ## v0.2.0
 
 * Enhancements

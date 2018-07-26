@@ -3,17 +3,14 @@ defmodule NervesHubCA.APITest do
   doctest NervesHubCA
 
   alias NervesHubCA.CFSSL
+  alias NervesHubCA.Intermediate.CA.Server, as: CA
 
   test "create device certificate" do
     serial = "123456"
 
     {:ok, %{"certificate" => cert}} = NervesHubCA.create_device_certificate(serial)
 
-    NervesHubCA.Storage.working_dir()
-    |> Path.join("device.pem")
-    |> File.write(cert)
-
-    {:ok, result} = CFSSL.certinfo(RootCA, %{certificate: cert})
+    {:ok, result} = CFSSL.certinfo(CA, %{certificate: cert})
 
     assert serial == get_in(result, ["subject", "organization"])
   end
@@ -23,11 +20,7 @@ defmodule NervesHubCA.APITest do
 
     {:ok, %{"certificate" => cert}} = NervesHubCA.create_user_certificate(username)
 
-    NervesHubCA.Storage.working_dir()
-    |> Path.join("user.pem")
-    |> File.write(cert)
-
-    {:ok, result} = CFSSL.certinfo(RootCA, %{certificate: cert})
+    {:ok, result} = CFSSL.certinfo(CA, %{certificate: cert})
 
     assert username == get_in(result, ["subject", "organization"])
   end
@@ -37,11 +30,7 @@ defmodule NervesHubCA.APITest do
 
     {:ok, %{"certificate" => cert}} = NervesHubCA.create_server_certificate(hostname)
 
-    NervesHubCA.Storage.working_dir()
-    |> Path.join("api.pem")
-    |> File.write(cert)
-
-    {:ok, result} = CFSSL.certinfo(RootCA, %{certificate: cert})
+    {:ok, result} = CFSSL.certinfo(CA, %{certificate: cert})
 
     assert hostname == get_in(result, ["subject", "common_name"])
   end

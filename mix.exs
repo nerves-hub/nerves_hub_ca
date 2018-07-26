@@ -4,12 +4,13 @@ defmodule NervesHubCA.MixProject do
   def project do
     [
       app: :nerves_hub_ca,
-      version: "0.2.0",
+      version: "0.3.0",
       elixir: "~> 1.6",
       source_url: "https://github.com/nerves-hub/nerves_hub_ca",
       start_permanent: Mix.env() == :prod,
       docs: docs(),
-      deps: deps()
+      deps: deps(),
+      aliases: [test: ["nerves_hub_ca.init", "test"]]
     ]
   end
 

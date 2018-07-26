@@ -84,7 +84,7 @@ defmodule NervesHubCA.Router do
     path = conn.path_info |> List.last()
     {:ok, params, conn} = Plug.Conn.read_body(conn)
 
-    resp = NervesHubCA.CFSSL.request(RootCA, method, path, params)
+    resp = NervesHubCA.CFSSL.request(NervesHubCA.Intermediate.CA.Server, method, path, params)
 
     resp(conn, resp)
   end
