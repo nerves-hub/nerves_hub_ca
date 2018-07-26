@@ -13,6 +13,8 @@ working_dir =
 
 working_dir = System.get_env("NERVES_HUB_CA_DIR") || working_dir
 
+IO.puts("WorkingDir: #{working_dir}")
+
 config :nerves_hub_ca, working_dir: working_dir
 
 config :nerves_hub_ca, :cfssl_defaults,
