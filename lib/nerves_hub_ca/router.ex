@@ -51,6 +51,21 @@ defmodule NervesHubCA.Router do
     end
   end
 
+  post "sign_device_csr" do
+    opts = Plug.Parsers.init(@plug_parsers_opts)
+    conn = Plug.Parsers.call(conn, opts)
+
+    case Map.get(conn.body_params, "csr") do
+      nil ->
+        send_resp(conn, 400, "Missing parameter: csr")
+
+      csr ->
+        csr = Base.decode64!(csr)
+        {:ok, result} = NervesHubCA.sign_device_csr(csr)
+        send_resp(conn, 200, Jason.encode!(result))
+    end
+  end
+
   post "create_user_certificate" do
     opts = Plug.Parsers.init(@plug_parsers_opts)
     conn = Plug.Parsers.call(conn, opts)
@@ -61,6 +76,21 @@ defmodule NervesHubCA.Router do
 
       username ->
         {:ok, result} = NervesHubCA.create_user_certificate(username)
+        send_resp(conn, 200, Jason.encode!(result))
+    end
+  end
+
+  post "sign_user_csr" do
+    opts = Plug.Parsers.init(@plug_parsers_opts)
+    conn = Plug.Parsers.call(conn, opts)
+
+    case Map.get(conn.body_params, "csr") do
+      nil ->
+        send_resp(conn, 400, "Missing parameter: csr")
+
+      csr ->
+        csr = Base.decode64!(csr)
+        {:ok, result} = NervesHubCA.sign_user_csr(csr)
         send_resp(conn, 200, Jason.encode!(result))
     end
   end

@@ -54,6 +54,40 @@ defmodule NervesHubCA.RouterTest do
     assert {:ok, 200, _body} = http_request(:post, url, params, context[:http_opts])
   end
 
+  describe "create from CSR" do
+    test "devices", context do
+      url = url("sign_device_csr")
+
+      csr =
+        Path.expand("test/fixtures/device.csr")
+        |> File.read!()
+        |> Base.encode64()
+
+      params = %{
+        csr: csr
+      }
+
+      params = Jason.encode!(params)
+      assert {:ok, 200, _body} = http_request(:post, url, params, context[:http_opts])
+    end
+
+    test "users", context do
+      url = url("sign_user_csr")
+
+      csr =
+        Path.expand("test/fixtures/user.csr")
+        |> File.read!()
+        |> Base.encode64()
+
+      params = %{
+        csr: csr
+      }
+
+      params = Jason.encode!(params)
+      assert {:ok, 200, _body} = http_request(:post, url, params, context[:http_opts])
+    end
+  end
+
   test "can match cfssl paths", context do
     url = url("newcert")
 
