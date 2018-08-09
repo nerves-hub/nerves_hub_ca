@@ -35,12 +35,12 @@ defmodule NervesHubCA.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:plug, "~> 1.5"},
+      {:plug, "~> 1.6"},
       {:cowboy, "~> 2.1"},
       {:jason, "~> 1.0"},
       {:muontrap, "~> 0.3"},
       {:distillery, "~> 1.5"},
-      {:ex_doc, "~> 0.18", only: [:test, :dev]}
+      {:ex_doc, "~> 0.18.0", only: [:test, :dev]}
     ]
   end
 end

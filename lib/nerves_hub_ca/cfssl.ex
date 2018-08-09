@@ -77,6 +77,12 @@ defmodule NervesHubCA.CFSSL do
     |> decode_resp
   end
 
+  def sign(csr, ca_cert, ca_key, config, profile, path \\ nil) do
+    path = path || File.cwd!()
+    args = "-ca #{ca_cert} -ca-key #{ca_key} -config #{config} -profile #{profile}"
+    cfssl("sign #{args} #{csr}", path)
+  end
+
   def request(_, _, _, _ \\ "")
 
   def request(pid, method, endpoint, params) when is_binary(params) do
@@ -218,5 +224,20 @@ defmodule NervesHubCA.CFSSL do
     :code.priv_dir(:nerves_hub_ca)
     |> to_string()
     |> Path.join("cfssl")
+  end
+
+  defp cfssl(args, path) when is_binary(args) do
+    String.split(args, " ")
+    |> cfssl(path)
+  end
+
+  defp cfssl(args, path) when is_list(args) do
+    case System.cmd("cfssl", args, cd: path) do
+      {ret, 0} ->
+        Jason.decode(ret)
+
+      error ->
+        error
+    end
   end
 end
