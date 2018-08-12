@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4.0
+
+* Enhancements
+  * Added `/sign_user_csr` for signing user certificate signing requests.
+  * Added `/sign_device_csr` for signing device certificate signing requests.
+
 ## v0.3.0
 
 The certificate structure has changed.
