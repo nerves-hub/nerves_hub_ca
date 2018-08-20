@@ -40,7 +40,7 @@ defmodule NervesHubCA.MixProject do
       {:jason, "~> 1.0"},
       {:muontrap, "~> 0.3"},
       {:distillery, "~> 1.5"},
-      {:ex_doc, "~> 0.18.0", only: [:test, :dev]}
+      {:ex_doc, "~> 0.18.0", only: [:test, :dev], runtime: false}
     ]
   end
 end
