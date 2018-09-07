@@ -29,7 +29,7 @@ defmodule NervesHubCA do
   Sign a device certificate.
 
   The supplied certificate will contain the serial
-  number in the orginization field.
+  number in the organization field.
 
   See the document:
   Generating and signing CSRs.md
