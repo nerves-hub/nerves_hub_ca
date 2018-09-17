@@ -24,6 +24,8 @@ defmodule Mix.Tasks.NervesHubCa.Init do
     |> Enum.each(&File.write!(ca_cert, File.read!(&1), [:append]))
 
     gen_server_cert("ca.nerves-hub.org", path)
+    gen_server_cert("device.nerves-hub.org", path)
+    gen_server_cert("api.nerves-hub.org", path)
     gen_client_cert("ca-client", path)
   end
 
