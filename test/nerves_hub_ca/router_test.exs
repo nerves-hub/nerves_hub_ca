@@ -21,39 +21,6 @@ defmodule NervesHubCA.RouterTest do
     ]
   end
 
-  test "can create device certificates", context do
-    url = url("create_device_certificate")
-
-    params = %{
-      serial: "12345"
-    }
-
-    params = Jason.encode!(params)
-    assert {:ok, 200, _body} = http_request(:post, url, params, context[:http_opts])
-  end
-
-  test "can create user certificates", context do
-    url = url("create_user_certificate")
-
-    params = %{
-      username: "test@test.com"
-    }
-
-    params = Jason.encode!(params)
-    assert {:ok, 200, _body} = http_request(:post, url, params, context[:http_opts])
-  end
-
-  test "can create server certificates", context do
-    url = url("create_server_certificate")
-
-    params = %{
-      hostname: "api.nerves-hub.org"
-    }
-
-    params = Jason.encode!(params)
-    assert {:ok, 200, _body} = http_request(:post, url, params, context[:http_opts])
-  end
-
   describe "create from CSR" do
     test "devices", context do
       url = url("sign_device_csr")
@@ -86,21 +53,6 @@ defmodule NervesHubCA.RouterTest do
       params = Jason.encode!(params)
       assert {:ok, 200, _body} = http_request(:post, url, params, context[:http_opts])
     end
-  end
-
-  test "can match cfssl paths", context do
-    url = url("newcert")
-
-    params = %{
-      request: %{
-        hosts: ["www.nerves-hub.org"],
-        names: [%{O: "nerves-hub"}],
-        CN: "www.nerves-hub.org"
-      }
-    }
-
-    params = Jason.encode!(params)
-    assert {:ok, 200, _body} = http_request(:post, url, params, context[:http_opts])
   end
 
   test "can reject fake paths", context do

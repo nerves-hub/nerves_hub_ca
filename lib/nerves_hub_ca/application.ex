@@ -6,27 +6,13 @@ defmodule NervesHubCA.Application do
   @required_api_opts [:cacertfile, :certfile, :keyfile]
 
   use Application
-
-  alias NervesHubCA.Intermediate.CA
-
   require Logger
 
   def start(_type, _args) do
     # List all child processes to be supervised
     start_httpc()
 
-    server_ca_opts = Application.get_env(:nerves_hub_ca, CA.Server, [])
-
-    device_ca_opts = Application.get_env(:nerves_hub_ca, CA.Device, [])
-
-    user_ca_opts = Application.get_env(:nerves_hub_ca, CA.User, [])
-
-    children =
-      [
-        NervesHubCA.CFSSL.child_spec(server_ca_opts, name: CA.Server),
-        NervesHubCA.CFSSL.child_spec(device_ca_opts, name: CA.Device),
-        NervesHubCA.CFSSL.child_spec(user_ca_opts, name: CA.User)
-      ] ++ api()
+    children = api()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -63,12 +49,6 @@ defmodule NervesHubCA.Application do
 
     if Enum.all?(@required_api_opts, &(&1 in keys)) do
       Logger.debug("Starting API webserver on #{opts[:port]}")
-
-      # ca_certs =
-      #   Keyword.get(opts, :cacerts, [])
-      #   |> NervesHubCA.Utils.cert_files_to_der()
-
-      # opts = Keyword.put(opts, :cacerts, ca_certs) |> IO.inspect()
 
       [
         Plug.Adapters.Cowboy2.child_spec(
