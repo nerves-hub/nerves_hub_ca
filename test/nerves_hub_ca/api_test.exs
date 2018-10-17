@@ -4,31 +4,40 @@ defmodule NervesHubCA.APITest do
 
   describe "create from CSR" do
     test "devices" do
-      serial = "device-1234"
-
       csr =
-        Path.expand("test/fixtures/device.csr")
+        Path.expand("test/fixtures/device-csr.pem")
         |> File.read!()
+        |> X509.CSR.from_pem!()
 
-      {:ok, %{"cert" => cert}} = NervesHubCA.sign_device_csr(csr)
-
-      {:ok, result} = NervesHubCA.certinfo(cert)
-
-      assert serial == get_in(result, ["subject", "organization"])
+      assert {:ok, %{cert: cert, issuer: issuer}} = NervesHubCA.sign_device_csr(csr, "org1-ca")
     end
 
     test "users" do
-      username = "test@test.com"
-
       csr =
-        Path.expand("test/fixtures/user.csr")
+        Path.expand("test/fixtures/user-csr.pem")
         |> File.read!()
+        |> X509.CSR.from_pem!()
 
-      {:ok, %{"cert" => cert}} = NervesHubCA.sign_user_csr(csr)
+      ca_certs = Path.join(NervesHubCA.Storage.working_dir(), "ca.pem")
 
-      {:ok, result} = NervesHubCA.certinfo(cert)
+      assert {:ok, %{cert: cert, issuer: issuer}} = NervesHubCA.sign_user_csr(csr)
 
-      assert username == get_in(result, ["subject", "organization"])
+      file = write_tmp("user.pem", cert)
+      assert {_, 0} = openssl(["verify", "-CAfile", ca_certs, file])
     end
+  end
+
+  defp openssl(args) do
+    openssl = System.get_env("OPENSSL_PATH") || "openssl"
+
+    System.cmd(openssl, List.wrap(args), stderr_to_stdout: true)
+  end
+
+  defp write_tmp(name, data) do
+    tmp_file = Path.expand("test/tmp/" <> name)
+
+    File.write!(tmp_file, data)
+
+    tmp_file
   end
 end

@@ -11,7 +11,6 @@ defmodule NervesHubCA.RouterTest do
     [
       http_opts: [
         ssl: [
-          verify: :verify_peer,
           cacertfile: Path.join(NervesHubCA.Storage.working_dir(), "ca.pem"),
           certfile: server_cert_file,
           keyfile: server_key_file,
@@ -26,12 +25,13 @@ defmodule NervesHubCA.RouterTest do
       url = url("sign_device_csr")
 
       csr =
-        Path.expand("test/fixtures/device.csr")
+        Path.expand("test/fixtures/device-csr.pem")
         |> File.read!()
         |> Base.encode64()
 
       params = %{
-        csr: csr
+        csr: csr,
+        issuer: "org1-ca"
       }
 
       params = Jason.encode!(params)
@@ -42,7 +42,7 @@ defmodule NervesHubCA.RouterTest do
       url = url("sign_user_csr")
 
       csr =
-        Path.expand("test/fixtures/user.csr")
+        Path.expand("test/fixtures/user-csr.pem")
         |> File.read!()
         |> Base.encode64()
 
@@ -58,11 +58,6 @@ defmodule NervesHubCA.RouterTest do
   test "can reject fake paths", context do
     url = url("fake")
     assert {:ok, 404, _body} = http_request(:get, url, "", context[:http_opts])
-  end
-
-  test "return error is missing client ssl" do
-    url = url("newcert")
-    assert {:error, _reason} = http_request(:post, url, "")
   end
 
   test "health check returns 200 ok", context do

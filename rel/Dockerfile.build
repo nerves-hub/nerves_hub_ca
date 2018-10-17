@@ -1,5 +1,3 @@
-FROM nerveshub/cfssl:1.3.2 as cfssl
-
 # Elixir build container
 FROM bitwalker/alpine-elixir:1.6.6 as builder
 
@@ -23,7 +21,6 @@ WORKDIR /app
 
 COPY --from=builder /build/_build/$MIX_ENV/rel/nerves_hub_ca/releases/*/nerves_hub_ca.tar.gz .
 RUN tar xvfz nerves_hub_ca.tar.gz > /dev/null && rm nerves_hub_ca.tar.gz
-COPY --from=cfssl /usr/local/bin/cfssl /usr/local/bin/cfssl
 
 COPY --from=builder /build/rel/scripts/s3-entrypoint.sh .
 RUN ["chmod", "+x", "/app/s3-entrypoint.sh"]
