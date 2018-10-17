@@ -1,42 +1,38 @@
 defmodule NervesHubCA do
-  alias NervesHubCA.CFSSL
+  alias NervesHubCA.CertificateTemplate
   alias NervesHubCA.Intermediate.CA
 
   @doc """
-  Get certificate information
-   parameters:
-    `cert`: The certificate binary.
-  """
-  @spec certinfo(binary) :: CFSSL.result()
-  def certinfo(cert) do
-    cert_file = Plug.Upload.random_file!("cert")
-    File.write!(cert_file, cert)
-    CFSSL.certinfo(cert_file)
-  end
-
-  @doc """
   Sign a device certificate.
-
-  The supplied certificate will contain the serial
-  number in the organization field.
 
   See the document:
   Generating and signing CSRs.md
 
   Parameters:
     `csr`: The binary certificate signing request
+    `issuer`: The name of the issuer. This is used to link the certificate files.
   """
-  @spec sign_device_csr(binary) :: CFSSL.result()
-  def sign_device_csr(csr) do
-    ca_opts = Application.get_env(:nerves_hub_ca, CA.Device, [])
-    ca_cert = ca_opts[:ca]
-    ca_key = ca_opts[:ca_key]
+  @spec sign_device_csr(X509.CSR.t(), binary) :: {:ok, map} | {:error, any}
+  def sign_device_csr(csr, issuer_name) do
+    working_dir = NervesHubCA.Storage.working_dir()
 
-    config = Path.join(config_dir(), "ca-config.json")
-    csr_path = Plug.Upload.random_file!("csr")
-    File.write!(csr_path, csr)
+    issuer = Path.join(working_dir, issuer_name <> ".pem")
+    issuer_key = Path.join(working_dir, issuer_name <> "-key.pem")
 
-    CFSSL.sign(csr_path, ca_cert, ca_key, config, "device")
+    with true <- X509.CSR.valid?(csr),
+         {:ok, {issuer, issuer_key}} <- load_issuer_pem(issuer, issuer_key) do
+      public_key = X509.CSR.public_key(csr)
+      template = CertificateTemplate.device()
+      subject_rdn = CertificateTemplate.user_subject_rdn()
+
+      cert = X509.Certificate.new(public_key, subject_rdn, issuer, issuer_key, template: template)
+
+      {:ok,
+       %{
+         cert: X509.Certificate.to_pem(cert),
+         issuer: X509.Certificate.to_pem(issuer)
+       }}
+    end
   end
 
   @doc """
@@ -49,24 +45,36 @@ defmodule NervesHubCA do
   Generating and signing CSRs.md
 
   Parameters:
-    `csr`: The binary certificate signing request
+    `csr`: A DER encoded certificate signing request
   """
-  @spec sign_user_csr(binary) :: CFSSL.result()
+  @spec sign_user_csr(X509.CSR.t()) :: {:ok, map} | {:error, any}
   def sign_user_csr(csr) do
     ca_opts = Application.get_env(:nerves_hub_ca, CA.User, [])
-    ca_cert = ca_opts[:ca]
-    ca_key = ca_opts[:ca_key]
+    issuer = ca_opts[:ca]
+    issuer_key = ca_opts[:ca_key]
 
-    config = Path.join(config_dir(), "ca-config.json")
-    csr_path = Plug.Upload.random_file!("csr")
-    File.write!(csr_path, csr)
+    with true <- X509.CSR.valid?(csr),
+         {:ok, {issuer, issuer_key}} <- load_issuer_pem(issuer, issuer_key) do
+      public_key = X509.CSR.public_key(csr)
+      template = CertificateTemplate.user()
+      subject_rdn = CertificateTemplate.user_subject_rdn()
 
-    CFSSL.sign(csr_path, ca_cert, ca_key, config, "user")
+      cert = X509.Certificate.new(public_key, subject_rdn, issuer, issuer_key, template: template)
+
+      {:ok,
+       %{
+         cert: X509.Certificate.to_pem(cert),
+         issuer: X509.Certificate.to_pem(issuer)
+       }}
+    end
   end
 
-  defp config_dir do
-    :code.priv_dir(:nerves_hub_ca)
-    |> to_string()
-    |> Path.join("cfssl")
+  defp load_issuer_pem(issuer, issuer_key) do
+    with {:ok, issuer} <- File.read(issuer),
+         {:ok, issuer} <- X509.Certificate.from_pem(issuer),
+         {:ok, issuer_key} <- File.read(issuer_key),
+         {:ok, issuer_key} <- X509.PrivateKey.from_pem(issuer_key) do
+      {:ok, {issuer, issuer_key}}
+    end
   end
 end

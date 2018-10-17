@@ -1,4 +1,6 @@
 defmodule Mix.Tasks.NervesHubCa.Init do
+  alias NervesHubCA.CertificateTemplate
+
   @path Path.join(File.cwd!(), "etc/cfssl")
 
   @switches [
@@ -12,135 +14,121 @@ defmodule Mix.Tasks.NervesHubCa.Init do
 
     File.mkdir_p(path)
 
-    %{cert: root_ca} = gen_ca_cert("root-ca", path)
-    %{cert: server_ca} = gen_int_ca_cert("intermediate-server-ca", path)
-    %{cert: device_ca} = gen_int_ca_cert("intermediate-device-ca", path)
-    %{cert: user_ca} = gen_int_ca_cert("intermediate-user-ca", path)
+    # Generate Self-Signed Root
+    {root_ca, root_ca_key} = gen_root_ca_cert("NervesHub Root CA", 3)
 
-    # Create a pem of the ca trust chain
-    ca_cert = Path.join(path, "ca.pem")
+    write_certs(root_ca, root_ca_key, "root-ca", path)
 
-    [root_ca, server_ca, device_ca, user_ca]
-    |> Enum.each(&File.write!(ca_cert, File.read!(&1), [:append]))
+    # Generate Org certs
+    {org_root_ca, org_root_ca_key} =
+      gen_int_ca_cert(root_ca, root_ca_key, "NervesHub Org Root CA", 2)
 
-    gen_server_cert("ca.nerves-hub.org", path)
-    gen_server_cert("device.nerves-hub.org", path)
-    gen_server_cert("api.nerves-hub.org", path)
-    gen_client_cert("ca-client", path)
+    {org1_root_ca, org1_root_ca_key} =
+      gen_int_ca_cert(org_root_ca, org_root_ca_key, "NervesHub Org1 Root CA", 1)
+
+    {org1_ca, org1_ca_key} =
+      gen_int_ca_cert(org1_root_ca, org1_root_ca_key, "NervesHub Org1 CA", 0)
+
+    write_certs(org_root_ca, org_root_ca_key, "org-root-ca", path)
+    write_certs(org1_root_ca, org1_root_ca_key, "org1-root-ca", path)
+    write_certs(org1_ca, org1_ca_key, "org1-ca", path)
+
+    # Generate User certs
+    {user_root_ca, user_root_ca_key} =
+      gen_int_ca_cert(root_ca, root_ca_key, "NervesHub User Root CA", 0)
+
+    write_certs(user_root_ca, user_root_ca_key, "user-root-ca", path)
+
+    # Generate Server certs
+    {server_root_ca, server_root_ca_key} =
+      gen_int_ca_cert(root_ca, root_ca_key, "NervesHub Server Root CA", 0)
+
+    {ca_server, ca_server_key} =
+      gen_server_cert(server_root_ca, server_root_ca_key, "NervesHub CA Server", [
+        "ca.nerves-hub.org"
+      ])
+
+    {api_server, api_server_key} =
+      gen_server_cert(server_root_ca, server_root_ca_key, "NervesHub API Server", [
+        "api.nerves-hub.org"
+      ])
+
+    {device_server, device_server_key} =
+      gen_server_cert(server_root_ca, server_root_ca_key, "NervesHub Device Server", [
+        "device.nerves-hub.org"
+      ])
+
+    write_certs(server_root_ca, server_root_ca_key, "server-root-ca", path)
+    write_certs(ca_server, ca_server_key, "ca.nerves-hub.org", path)
+    write_certs(api_server, api_server_key, "api.nerves-hub.org", path)
+    write_certs(device_server, device_server_key, "device.nerves-hub.org", path)
+
+    ca_bundle_path = Path.join(path, "ca.pem")
+
+    ca_bundle =
+        X509.Certificate.to_pem(root_ca) <> X509.Certificate.to_pem(user_root_ca) <>
+        X509.Certificate.to_pem(server_root_ca)
+
+    File.write(ca_bundle_path, ca_bundle)
   end
 
-  defp gen_client_cert(name, path) do
-    config = Path.join(config_dir(), "ca-config.json")
-    ca_cert = Path.join(path, "intermediate-server-ca.pem")
-    ca_key = Path.join(path, "intermediate-server-ca-key.pem")
+  defp gen_server_cert(issuer, issuer_key, common_name, subject_alt_names) do
+    opts = [
+      hash: CertificateTemplate.hash(),
+      extensions: [
+        subject_alt_name: X509.Certificate.Extension.subject_alt_name(subject_alt_names)
+      ]
+    ]
 
-    csr = %{
-      "CN" => name,
-      "key" => %{
-        "algo" => "ecdsa",
-        "size" => 256
-      }
-    }
-
-    csr = Jason.encode!(csr)
-    csr_path = Path.join(path, "#{name}.json")
-    File.write(csr_path, csr)
-
-    cfssl(
-      "gencert -ca #{ca_cert} -ca-key #{ca_key} -config #{config} -profile client -hostname #{
-        name
-      } #{csr_path}",
-      path
-    )
-    |> write_certs(name, path)
+    X509.Certificate.Template.new(:server, opts)
+    |> gen_cert(issuer, issuer_key, common_name)
   end
 
-  defp gen_server_cert(hostname, path) do
-    config = Path.join(config_dir(), "ca-config.json")
-    ca_cert = Path.join(path, "intermediate-server-ca.pem")
-    ca_key = Path.join(path, "intermediate-server-ca-key.pem")
+  defp gen_int_ca_cert(issuer, issuer_key, common_name, path_length) do
+    opts = [
+      hash: CertificateTemplate.hash(),
+      extensions: [
+        basic_constraints: X509.Certificate.Extension.basic_constraints(true, path_length),
+        ext_key_usage: false
+      ]
+    ]
 
-    csr = %{
-      "CN" => hostname,
-      "key" => %{
-        "algo" => "ecdsa",
-        "size" => 256
-      }
-    }
-
-    csr = Jason.encode!(csr)
-    csr_path = Path.join(path, "#{hostname}.json")
-    File.write(csr_path, csr)
-
-    cfssl(
-      "gencert -ca #{ca_cert} -ca-key #{ca_key} -config #{config} -profile server -hostname #{
-        hostname
-      } #{csr_path}",
-      path
-    )
-    |> write_certs(hostname, path)
+    X509.Certificate.Template.new(:ca, opts)
+    |> gen_cert(issuer, issuer_key, common_name)
   end
 
-  defp gen_int_ca_cert(name, path) do
-    gen_ca_cert(name, path)
-    |> root_sign(path)
-    |> write_certs(name, path)
+  defp gen_root_ca_cert(common_name, path_length) do
+    opts = [
+      hash: CertificateTemplate.hash(),
+      extensions: [
+        authority_key_identifier: false,
+        basic_constraints: X509.Certificate.Extension.basic_constraints(true, path_length)
+      ]
+    ]
+
+    template = X509.Certificate.Template.new(:root_ca, opts)
+    ca_key = X509.PrivateKey.new_ec(CertificateTemplate.ec_named_curve())
+    subject_rdn = Path.join(CertificateTemplate.subject_rdn(), "CN=" <> common_name)
+    ca = X509.Certificate.self_signed(ca_key, subject_rdn, template: template)
+    {ca, ca_key}
   end
 
-  defp gen_ca_cert(name, path) do
-    csr =
-      config_dir()
-      |> Path.join("#{name}-csr.json")
-
-    cfssl("gencert -initca #{csr}", path)
-    |> write_certs(name, path)
+  defp gen_cert(template, issuer, issuer_key, common_name) do
+    private_key = X509.PrivateKey.new_ec(CertificateTemplate.ec_named_curve())
+    public_key = X509.PublicKey.derive(private_key)
+    subject_rdn = Path.join(CertificateTemplate.subject_rdn(), "CN=" <> common_name)
+    ca = X509.Certificate.new(public_key, subject_rdn, issuer, issuer_key, template: template)
+    {ca, private_key}
   end
 
-  defp root_sign(%{csr: csr}, path) do
-    config = Path.join(config_dir(), "root-to-intermediate-config.json")
-    ca_cert = Path.join(path, "root-ca.pem")
-    ca_key = Path.join(path, "root-ca-key.pem")
-    cfssl("sign -ca #{ca_cert} -ca-key #{ca_key} -config #{config} #{csr}", path)
-  end
+  defp write_certs(cert, private_key, name, path) do
+    cert = X509.Certificate.to_pem(cert)
+    private_key = X509.PrivateKey.to_pem(private_key)
 
-  defp config_dir do
-    :code.priv_dir(:nerves_hub_ca)
-    |> to_string()
-    |> Path.join("cfssl")
-  end
-
-  defp cfssl(args, path) when is_binary(args) do
-    String.split(args, " ")
-    |> cfssl(path)
-  end
-
-  defp cfssl(args, path) when is_list(args) do
-    IO.inspect(args)
-
-    case System.cmd("cfssl", args, cd: path) do
-      {ret, 0} ->
-        Jason.decode!(ret)
-
-      {error, _code} ->
-        Mix.raise("cfssl returned an error: #{inspect(error)}")
-    end
-  end
-
-  defp write_certs(certs, name, path) do
     cert_path = Path.join(path, "#{name}.pem")
-    File.write!(cert_path, certs["cert"])
+    File.write!(cert_path, cert)
 
-    csr_path = Path.join(path, "#{name}-csr.pem")
-    File.write!(csr_path, certs["csr"])
-
-    case Map.get(certs, "key") do
-      nil ->
-        %{cert: cert_path, csr: csr_path}
-
-      key ->
-        key_path = Path.join(path, "#{name}-key.pem")
-        File.write!(key_path, key)
-        %{cert: cert_path, csr: csr_path, key: key_path}
-    end
+    private_key_path = Path.join(path, "#{name}-key.pem")
+    File.write!(private_key_path, private_key)
   end
 end
