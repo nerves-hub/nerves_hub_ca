@@ -48,7 +48,7 @@ defmodule NervesHubCA.CertificateTemplate do
 
   # Helpers
 
-  defp years(years) do
+  def years(years) do
     now =
       DateTime.utc_now()
       |> trim()
