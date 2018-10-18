@@ -8,7 +8,7 @@ defmodule NervesHubCA.CertificateTemplate do
 
   @hash :sha256
   @ec_named_curve :secp256r1
-  @subject_rdn "/C=US/ST=MD/L=Rockville/O=NervesHub"
+  @subject_rdn "/O=NervesHub"
 
   def hash(), do: @hash
   def ec_named_curve(), do: @ec_named_curve
