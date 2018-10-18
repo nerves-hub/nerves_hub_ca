@@ -35,7 +35,7 @@ defmodule NervesHubCA.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:x509, path: "../x509"},
+      {:x509, github: "voltone/x509", branch: "master"},
       {:plug, "~> 1.6"},
       {:cowboy, "~> 2.1"},
       {:jason, "~> 1.0"},
