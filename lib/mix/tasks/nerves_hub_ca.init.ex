@@ -15,22 +15,18 @@ defmodule Mix.Tasks.NervesHubCa.Init do
     File.mkdir_p(path)
 
     # Generate Self-Signed Root
-    {root_ca, root_ca_key} = gen_root_ca_cert("NervesHub Root CA", 3)
+    {root_ca, root_ca_key} = gen_root_ca_cert("NervesHub Root CA")
 
     write_certs(root_ca, root_ca_key, "root-ca", path)
 
     # Generate Org certs
     {org_root_ca, org_root_ca_key} =
-      gen_int_ca_cert(root_ca, root_ca_key, "NervesHub Org Root CA", 2)
-
-    {org1_root_ca, org1_root_ca_key} =
-      gen_int_ca_cert(org_root_ca, org_root_ca_key, "NervesHub Org1 Root CA", 1)
+      gen_int_ca_cert(root_ca, root_ca_key, "NervesHub Org Root CA", 1)
 
     {org1_ca, org1_ca_key} =
-      gen_int_ca_cert(org1_root_ca, org1_root_ca_key, "NervesHub Org1 CA", 0)
+      gen_int_ca_cert(org_root_ca, org_root_ca_key, "NervesHub Org1 CA", 0)
 
     write_certs(org_root_ca, org_root_ca_key, "org-root-ca", path)
-    write_certs(org1_root_ca, org1_root_ca_key, "org1-root-ca", path)
     write_certs(org1_ca, org1_ca_key, "org1-ca", path)
 
     # Generate User certs
@@ -67,7 +63,7 @@ defmodule Mix.Tasks.NervesHubCa.Init do
 
     ca_bundle =
         X509.Certificate.to_pem(root_ca) <> X509.Certificate.to_pem(user_root_ca) <>
-        X509.Certificate.to_pem(server_root_ca)
+        X509.Certificate.to_pem(server_root_ca) <> X509.Certificate.to_pem(org_root_ca)
 
     File.write(ca_bundle_path, ca_bundle)
   end
@@ -75,6 +71,7 @@ defmodule Mix.Tasks.NervesHubCa.Init do
   defp gen_server_cert(issuer, issuer_key, common_name, subject_alt_names) do
     opts = [
       hash: CertificateTemplate.hash(),
+      validity: NervesHubCA.CertificateTemplate.years(3),
       extensions: [
         subject_alt_name: X509.Certificate.Extension.subject_alt_name(subject_alt_names)
       ]
@@ -86,6 +83,7 @@ defmodule Mix.Tasks.NervesHubCa.Init do
 
   defp gen_int_ca_cert(issuer, issuer_key, common_name, path_length) do
     opts = [
+      validity: NervesHubCA.CertificateTemplate.years(10),
       hash: CertificateTemplate.hash(),
       extensions: [
         basic_constraints: X509.Certificate.Extension.basic_constraints(true, path_length),
@@ -97,12 +95,15 @@ defmodule Mix.Tasks.NervesHubCa.Init do
     |> gen_cert(issuer, issuer_key, common_name)
   end
 
-  defp gen_root_ca_cert(common_name, path_length) do
+  defp gen_root_ca_cert(common_name) do
     opts = [
+      validity: NervesHubCA.CertificateTemplate.years(30),
       hash: CertificateTemplate.hash(),
       extensions: [
-        authority_key_identifier: false,
-        basic_constraints: X509.Certificate.Extension.basic_constraints(true, path_length)
+        key_usage: X509.Certificate.Extension.key_usage([:keyCertSign, :cRLSign]),
+        basic_constraints: X509.Certificate.Extension.basic_constraints(true),
+        subject_key_identifier: true,
+        authority_key_identifier: false
       ]
     ]
 
