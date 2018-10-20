@@ -30,13 +30,13 @@ environment :dev do
   # dev mode.
   set dev_mode: true
   set include_erts: false
-  set cookie: :"1fwTh*RT(hZLkkJp]oUSr7K6cOL.Bn[@S0Q=Vmp5q[TOdf^[4{7F>I;RWc=fpPGT"
+  set cookie: :""
 end
 
 environment :prod do
   set include_erts: true
   set include_src: false
-  set cookie: :"}xv_*!=)eA&MXA$INx;qn?H(c7Ic5nFJaR6TGTwH7~4%bWo2obxo2>;7)U/K(l^G"
+  set cookie: :""
 end
 
 # You may define one or more releases in this file.
@@ -45,6 +45,9 @@ end
 # will be used by default
 
 release :nerves_hub_ca do
+  set commands: [
+    "migrate": "rel/scripts/migrate-and-seed.sh"
+  ]
   set version: current_version(:nerves_hub_ca)
   set applications: [
     :runtime_tools

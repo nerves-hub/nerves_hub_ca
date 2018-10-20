@@ -19,7 +19,9 @@ defmodule NervesHubCA.CertificateTemplate do
   def device_subject_rdn(), do: Path.join(@subject_rdn, "CN=NervesHub Device Certificate")
 
   def random_serial_number() do
-    <<i::unsigned-size(@serial_number_bytes)-unit(8)>> = :crypto.strong_rand_bytes(@serial_number_bytes)
+    <<i::unsigned-size(@serial_number_bytes)-unit(8)>> =
+      :crypto.strong_rand_bytes(@serial_number_bytes)
+
     i
   end
 

@@ -12,7 +12,10 @@ defmodule NervesHubCA.Application do
     # List all child processes to be supervised
     start_httpc()
 
-    children = api()
+    children = [
+      {NervesHubCA.Repo, []}
+      | api()
+    ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -51,7 +54,7 @@ defmodule NervesHubCA.Application do
       Logger.debug("Starting API webserver on #{opts[:port]}")
 
       [
-        Plug.Adapters.Cowboy2.child_spec(
+        Plug.Cowboy.child_spec(
           scheme: :https,
           plug: {NervesHubCA.Router, []},
           options: opts

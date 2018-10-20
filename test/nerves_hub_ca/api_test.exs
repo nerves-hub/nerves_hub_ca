@@ -10,6 +10,19 @@ defmodule NervesHubCA.APITest do
         |> X509.CSR.from_pem!()
 
       assert {:ok, %{cert: cert, issuer: issuer}} = NervesHubCA.sign_device_csr(csr, "org1-ca")
+
+      ca_certs = Path.join(NervesHubCA.Storage.working_dir(), "ca.pem")
+
+      file = write_tmp("device.pem", cert)
+      assert {_, 0} = openssl(["verify", "-CAfile", ca_certs, file])
+
+      serial =
+        cert
+        |> X509.Certificate.from_pem!()
+        |> X509.Certificate.serial()
+        |> to_string()
+
+      assert %{serial: ^serial} = NervesHubCA.Repo.get_by(NervesHubCA.Certificate, serial: serial)
     end
 
     test "users" do
@@ -24,6 +37,14 @@ defmodule NervesHubCA.APITest do
 
       file = write_tmp("user.pem", cert)
       assert {_, 0} = openssl(["verify", "-CAfile", ca_certs, file])
+
+      serial =
+        cert
+        |> X509.Certificate.from_pem!()
+        |> X509.Certificate.serial()
+        |> to_string()
+
+      assert %{serial: ^serial} = NervesHubCA.Repo.get_by(NervesHubCA.Certificate, serial: serial)
     end
   end
 
