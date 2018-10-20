@@ -25,13 +25,8 @@ defmodule NervesHubCA do
       template = CertificateTemplate.device()
       subject_rdn = CertificateTemplate.user_subject_rdn()
 
-      cert = X509.Certificate.new(public_key, subject_rdn, issuer, issuer_key, template: template)
-
-      {:ok,
-       %{
-         cert: X509.Certificate.to_pem(cert),
-         issuer: X509.Certificate.to_pem(issuer)
-       }}
+      X509.Certificate.new(public_key, subject_rdn, issuer, issuer_key, template: template)
+      |> insert(issuer)
     end
   end
 
@@ -59,13 +54,8 @@ defmodule NervesHubCA do
       template = CertificateTemplate.user()
       subject_rdn = CertificateTemplate.user_subject_rdn()
 
-      cert = X509.Certificate.new(public_key, subject_rdn, issuer, issuer_key, template: template)
-
-      {:ok,
-       %{
-         cert: X509.Certificate.to_pem(cert),
-         issuer: X509.Certificate.to_pem(issuer)
-       }}
+      X509.Certificate.new(public_key, subject_rdn, issuer, issuer_key, template: template)
+      |> insert(issuer)
     end
   end
 
@@ -76,5 +66,30 @@ defmodule NervesHubCA do
          {:ok, issuer_key} <- X509.PrivateKey.from_pem(issuer_key) do
       {:ok, {issuer, issuer_key}}
     end
+  end
+
+  defp insert(certificate, issuer) do
+    params = %{
+      serial: to_string(X509.Certificate.serial(certificate)),
+      aki: NervesHubCA.Certificate.encode_aki(certificate),
+      ski: NervesHubCA.Certificate.encode_ski(certificate),
+      pem: X509.Certificate.to_pem(certificate),
+      expiry: NervesHubCA.Certificate.encode_expiry(certificate)
+    }
+
+    %NervesHubCA.Certificate{}
+    |> NervesHubCA.Certificate.changeset(params)
+    |> NervesHubCA.Repo.insert()
+    |> response(certificate, issuer)
+  end
+
+  defp response({:error, _} = error, _, _), do: error
+
+  defp response({:ok, _}, certificate, issuer) do
+    {:ok,
+     %{
+       cert: X509.Certificate.to_pem(certificate),
+       issuer: X509.Certificate.to_pem(issuer)
+     }}
   end
 end

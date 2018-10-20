@@ -5,15 +5,10 @@ defmodule NervesHubCA.RouterTest do
   import NervesHubCA.Utils
 
   setup_all do
-    server_cert_file = Path.join(NervesHubCA.Storage.working_dir(), "ca-client.pem")
-    server_key_file = Path.join(NervesHubCA.Storage.working_dir(), "ca-client-key.pem")
-
     [
       http_opts: [
         ssl: [
           cacertfile: Path.join(NervesHubCA.Storage.working_dir(), "ca.pem"),
-          certfile: server_cert_file,
-          keyfile: server_key_file,
           server_name_indication: 'ca.nerves-hub.org'
         ]
       ]

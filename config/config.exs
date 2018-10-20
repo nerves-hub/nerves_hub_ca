@@ -2,6 +2,9 @@
 # and its dependencies with the aid of the Mix.Config module.
 use Mix.Config
 
+config :nerves_hub_ca,
+  ecto_repos: [NervesHubCA.Repo]
+
 alias NervesHubCA.Intermediate.CA
 
 working_dir =
@@ -29,3 +32,5 @@ config :nerves_hub_ca, :api,
 config :nerves_hub_ca, CA.User,
   ca: Path.join(working_dir, "user-root-ca.pem"),
   ca_key: Path.join(working_dir, "user-root-ca-key.pem")
+
+import_config "#{Mix.env()}.exs"

@@ -10,7 +10,7 @@ defmodule NervesHubCA.MixProject do
       start_permanent: Mix.env() == :prod,
       docs: docs(),
       deps: deps(),
-      aliases: [test: ["nerves_hub_ca.init", "test"]]
+      aliases: [test: ["ecto.create --quiet", "ecto.migrate", "test"]]
     ]
   end
 
@@ -35,12 +35,15 @@ defmodule NervesHubCA.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:x509, github: "voltone/x509", branch: "master"},
-      {:plug, "~> 1.6"},
+      {:ecto_sql, "~> 3.0.0-rc or ~> 3.0"},
+      {:postgrex, "~> 0.14.0-rc or ~> 0.14"},
+      {:x509, "~> 0.4"},
+      {:plug, "~> 1.7"},
+      {:plug_cowboy, "~> 2.0"},
       {:cowboy, "~> 2.1"},
       {:jason, "~> 1.0"},
       {:distillery, "~> 1.5"},
-      {:ex_doc, "~> 0.18.0", only: [:test, :dev], runtime: false}
+      {:ex_doc, "~> 0.18", only: [:test, :dev], runtime: false}
     ]
   end
 end

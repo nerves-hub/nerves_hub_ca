@@ -23,3 +23,4 @@ erl_crash.dump
 nerves_hub_ca-*.tar
 /test/tmp
 /etc
+.env

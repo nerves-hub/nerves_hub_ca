@@ -44,8 +44,15 @@ defmodule NervesHubCA.Router do
     case conn.body_params do
       %{"csr" => csr, "issuer" => issuer} ->
         csr = Base.decode64!(csr) |> X509.CSR.from_pem!()
-        {:ok, result} = NervesHubCA.sign_device_csr(csr, issuer)
-        send_resp(conn, 200, Jason.encode!(result))
+
+        case NervesHubCA.sign_device_csr(csr, issuer) do
+          {:ok, result} ->
+            send_resp(conn, 200, Jason.encode!(result))
+
+          {:error, error} ->
+            resp = encode_error(error)
+            send_resp(conn, 400, resp)
+        end
 
       _ ->
         send_resp(conn, 400, "Missing parameters")
@@ -62,12 +69,26 @@ defmodule NervesHubCA.Router do
 
       csr ->
         csr = Base.decode64!(csr) |> X509.CSR.from_pem!()
-        {:ok, result} = NervesHubCA.sign_user_csr(csr)
-        send_resp(conn, 200, Jason.encode!(result))
+
+        case NervesHubCA.sign_user_csr(csr) do
+          {:ok, result} ->
+            send_resp(conn, 200, Jason.encode!(result))
+
+          {:error, error} ->
+            resp = encode_error(error)
+            send_resp(conn, 400, resp)
+        end
     end
   end
 
   match _ do
     send_resp(conn, 404, "not found")
+  end
+
+  defp encode_error(%{erorrs: errors}) do
+    Enum.reduce(errors, %{}, fn {field, {reason, _}}, acc ->
+      Map.put(acc, field, reason)
+    end)
+    |> Jason.encode!()
   end
 end
