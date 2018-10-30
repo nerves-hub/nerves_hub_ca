@@ -9,7 +9,7 @@ defmodule NervesHubCA.APITest do
         |> File.read!()
         |> X509.CSR.from_pem!()
 
-      assert {:ok, %{cert: cert, issuer: issuer}} = NervesHubCA.sign_device_csr(csr, "org1-ca")
+      assert {:ok, %{cert: cert, issuer: issuer}} = NervesHubCA.sign_device_csr(csr)
 
       ca_certs = Path.join(NervesHubCA.Storage.working_dir(), "ca.pem")
 

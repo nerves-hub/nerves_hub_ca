@@ -33,4 +33,8 @@ config :nerves_hub_ca, CA.User,
   ca: Path.join(working_dir, "user-root-ca.pem"),
   ca_key: Path.join(working_dir, "user-root-ca-key.pem")
 
+config :nerves_hub_ca, CA.Device,
+  ca: Path.join(working_dir, "device-root-ca.pem"),
+  ca_key: Path.join(working_dir, "device-root-ca-key.pem")
+
 import_config "#{Mix.env()}.exs"
