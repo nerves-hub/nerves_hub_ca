@@ -45,6 +45,7 @@ end
 # will be used by default
 
 release :nerves_hub_ca do
+  set vm_args: "rel/vm.args"
   set commands: [
     migrate: "rel/scripts/migrate-and-seed.sh"
   ]
