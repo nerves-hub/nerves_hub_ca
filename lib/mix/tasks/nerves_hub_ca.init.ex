@@ -19,14 +19,11 @@ defmodule Mix.Tasks.NervesHubCa.Init do
 
     write_certs(root_ca, root_ca_key, "root-ca", path)
 
-    # Generate Org certs
-    {org_root_ca, org_root_ca_key} =
-      gen_int_ca_cert(root_ca, root_ca_key, "NervesHub Org Root CA", 1)
+    # Generate Device certs
+    {device_root_ca, device_root_ca_key} =
+      gen_int_ca_cert(root_ca, root_ca_key, "NervesHub Device Root CA", 0)
 
-    {org1_ca, org1_ca_key} = gen_int_ca_cert(org_root_ca, org_root_ca_key, "NervesHub Org1 CA", 0)
-
-    write_certs(org_root_ca, org_root_ca_key, "org-root-ca", path)
-    write_certs(org1_ca, org1_ca_key, "org1-ca", path)
+    write_certs(device_root_ca, device_root_ca_key, "device-root-ca", path)
 
     # Generate User certs
     {user_root_ca, user_root_ca_key} =
@@ -63,8 +60,7 @@ defmodule Mix.Tasks.NervesHubCa.Init do
     ca_bundle =
       X509.Certificate.to_pem(root_ca) <>
         X509.Certificate.to_pem(user_root_ca) <>
-        X509.Certificate.to_pem(server_root_ca) <>
-        X509.Certificate.to_pem(org_root_ca) <> X509.Certificate.to_pem(org1_ca)
+        X509.Certificate.to_pem(server_root_ca) <> X509.Certificate.to_pem(device_root_ca)
 
     File.write(ca_bundle_path, ca_bundle)
   end

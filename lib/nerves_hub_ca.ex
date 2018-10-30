@@ -12,12 +12,13 @@ defmodule NervesHubCA do
     `csr`: The binary certificate signing request
     `issuer`: The name of the issuer. This is used to link the certificate files.
   """
-  @spec sign_device_csr(X509.CSR.t(), binary) :: {:ok, map} | {:error, any}
-  def sign_device_csr(csr, issuer_name) do
+  @spec sign_device_csr(X509.CSR.t()) :: {:ok, map} | {:error, any}
+  def sign_device_csr(csr) do
     working_dir = NervesHubCA.Storage.working_dir()
 
-    issuer = Path.join(working_dir, issuer_name <> ".pem")
-    issuer_key = Path.join(working_dir, issuer_name <> "-key.pem")
+    ca_opts = Application.get_env(:nerves_hub_ca, CA.Device, [])
+    issuer = ca_opts[:ca]
+    issuer_key = ca_opts[:ca_key]
 
     with true <- X509.CSR.valid?(csr),
          {:ok, {issuer, issuer_key}} <- load_issuer_pem(issuer, issuer_key) do
@@ -33,7 +34,7 @@ defmodule NervesHubCA do
   @doc """
   Sign a user certificate.
 
-  The supplied certificate will contain the usrrname
+  The supplied certificate will contain the username
   in the Organization of the Distinguished Name.
 
   See the document:

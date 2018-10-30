@@ -25,8 +25,7 @@ defmodule NervesHubCA.RouterTest do
         |> Base.encode64()
 
       params = %{
-        csr: csr,
-        issuer: "org1-ca"
+        csr: csr
       }
 
       params = Jason.encode!(params)

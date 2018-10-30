@@ -41,11 +41,14 @@ defmodule NervesHubCA.Router do
     opts = Plug.Parsers.init(@plug_parsers_opts)
     conn = Plug.Parsers.call(conn, opts)
 
-    case conn.body_params do
-      %{"csr" => csr, "issuer" => issuer} ->
+    case Map.get(conn.body_params, "csr") do
+      nil ->
+        send_resp(conn, 400, "Missing parameter: csr")
+
+      csr ->
         csr = Base.decode64!(csr) |> X509.CSR.from_pem!()
 
-        case NervesHubCA.sign_device_csr(csr, issuer) do
+        case NervesHubCA.sign_device_csr(csr) do
           {:ok, result} ->
             send_resp(conn, 200, Jason.encode!(result))
 
@@ -53,9 +56,6 @@ defmodule NervesHubCA.Router do
             resp = encode_error(error)
             send_resp(conn, 400, resp)
         end
-
-      _ ->
-        send_resp(conn, 400, "Missing parameters")
     end
   end
 
