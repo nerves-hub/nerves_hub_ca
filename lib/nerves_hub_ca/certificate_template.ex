@@ -16,18 +16,11 @@ defmodule NervesHubCA.CertificateTemplate do
   def subject_rdn(), do: @subject_rdn
   @spec user_subject_rdn() :: binary()
   def user_subject_rdn(), do: Path.join(@subject_rdn, "CN=NervesHub User Certificate")
-  def device_subject_rdn(), do: Path.join(@subject_rdn, "CN=NervesHub Device Certificate")
-
-  def random_serial_number() do
-    <<i::unsigned-size(@serial_number_bytes)-unit(8)>> =
-      :crypto.strong_rand_bytes(@serial_number_bytes)
-
-    i
-  end
+  def serial_number_bytes(), do: @serial_number_bytes
 
   def user() do
     %Template{
-      serial: random_serial_number(),
+      serial: {:random, serial_number_bytes()},
       validity: years(@user_validity_years),
       hash: @hash,
       extensions: [
@@ -43,7 +36,7 @@ defmodule NervesHubCA.CertificateTemplate do
 
   def device() do
     %Template{
-      serial: random_serial_number(),
+      serial: {:random, serial_number_bytes()},
       validity: years(@device_validity_years),
       hash: @hash,
       extensions: [
