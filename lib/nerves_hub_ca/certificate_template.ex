@@ -3,7 +3,7 @@ defmodule NervesHubCA.CertificateTemplate do
   alias X509.Certificate.{Template, Validity}
 
   @user_validity_years 1
-  @device_validity_years 5
+  @device_validity_years 31
   @serial_number_bytes 20
 
   @hash :sha256
