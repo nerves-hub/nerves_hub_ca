@@ -14,8 +14,6 @@ defmodule NervesHubCA do
   """
   @spec sign_device_csr(X509.CSR.t()) :: {:ok, map} | {:error, any}
   def sign_device_csr(csr) do
-    working_dir = NervesHubCA.Storage.working_dir()
-
     ca_opts = Application.get_env(:nerves_hub_ca, CA.Device, [])
     issuer = ca_opts[:ca]
     issuer_key = ca_opts[:ca_key]
@@ -24,7 +22,7 @@ defmodule NervesHubCA do
          {:ok, {issuer, issuer_key}} <- load_issuer_pem(issuer, issuer_key) do
       public_key = X509.CSR.public_key(csr)
       template = CertificateTemplate.device()
-      subject_rdn = CertificateTemplate.user_subject_rdn()
+      subject_rdn = X509.CSR.subject(csr) |> X509.RDNSequence.to_string()
 
       X509.Certificate.new(public_key, subject_rdn, issuer, issuer_key, template: template)
       |> insert(issuer)
@@ -53,7 +51,7 @@ defmodule NervesHubCA do
          {:ok, {issuer, issuer_key}} <- load_issuer_pem(issuer, issuer_key) do
       public_key = X509.CSR.public_key(csr)
       template = CertificateTemplate.user()
-      subject_rdn = CertificateTemplate.user_subject_rdn()
+      subject_rdn = X509.CSR.subject(csr) |> X509.RDNSequence.to_string()
 
       X509.Certificate.new(public_key, subject_rdn, issuer, issuer_key, template: template)
       |> insert(issuer)

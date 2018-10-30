@@ -14,8 +14,6 @@ defmodule NervesHubCA.CertificateTemplate do
   def ec_named_curve(), do: @ec_named_curve
 
   def subject_rdn(), do: @subject_rdn
-  @spec user_subject_rdn() :: binary()
-  def user_subject_rdn(), do: Path.join(@subject_rdn, "CN=NervesHub User Certificate")
   def serial_number_bytes(), do: @serial_number_bytes
 
   def user() do
