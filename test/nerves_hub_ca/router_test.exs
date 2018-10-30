@@ -19,9 +19,11 @@ defmodule NervesHubCA.RouterTest do
     test "devices", context do
       url = url("sign_device_csr")
 
+      key = X509.PrivateKey.new_ec(:secp256r1)
+
       csr =
-        Path.expand("test/fixtures/device-csr.pem")
-        |> File.read!()
+        X509.CSR.new(key, "/O=My Org/CN=device-1234")
+        |> X509.CSR.to_pem()
         |> Base.encode64()
 
       params = %{
@@ -35,9 +37,11 @@ defmodule NervesHubCA.RouterTest do
     test "users", context do
       url = url("sign_user_csr")
 
+      key = X509.PrivateKey.new_ec(:secp256r1)
+
       csr =
-        Path.expand("test/fixtures/user-csr.pem")
-        |> File.read!()
+        X509.CSR.new(key, "/O=NervesHub/CN=user-1234")
+        |> X509.CSR.to_pem()
         |> Base.encode64()
 
       params = %{
