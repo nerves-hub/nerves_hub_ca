@@ -80,7 +80,7 @@ defmodule Mix.Tasks.NervesHubCa.Init do
 
   defp gen_int_ca_cert(issuer, issuer_key, common_name, path_length) do
     opts = [
-      serial: CertificateTemplate.random_serial_number(),
+      serial: {:random, CertificateTemplate.serial_number_bytes()},
       validity: NervesHubCA.CertificateTemplate.years(10),
       hash: CertificateTemplate.hash(),
       extensions: [
@@ -95,7 +95,7 @@ defmodule Mix.Tasks.NervesHubCa.Init do
 
   defp gen_root_ca_cert(common_name) do
     opts = [
-      serial: CertificateTemplate.random_serial_number(),
+      serial: {:random, CertificateTemplate.serial_number_bytes()},
       validity: NervesHubCA.CertificateTemplate.years(30),
       hash: CertificateTemplate.hash(),
       extensions: [
