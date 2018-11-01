@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.5.0
+
+* Enhancements
+  * Removed `cfssl` and replaces with `x509`. All certificate operations are
+    done in erlang.
+  * Added database for tracking all certificates that are signed by the CA.
+  * Changed device certificate validity from 5 to 31 years.
+
+* Backwards incompatibilities
+  * Removed endpoints
+    * `/certinfo` - certificate information can be retreived from `x509` directly.
+    * `/create_device_certificate` - call `/sign_device_csr` instead
+    * `/create_user_certificate` - call `/sign_user_csr` instead
+
+
 ## v0.4.0
 
 * Enhancements
@@ -10,7 +25,7 @@
 
 The certificate structure has changed.
 Prior to this version, all certificates were signed off the main root certificate.
-This version will generate a root certificate and several intermediate root 
+This version will generate a root certificate and several intermediate root
 certificates for use with signing users, devices, servers, and ca clients.
 
 ```
@@ -20,7 +35,7 @@ certificates for use with signing users, devices, servers, and ca clients.
                 /         |        \
  --------------    --------------    --------------
 | Intermediate |  | Intermediate |  | Intermediate |
-|   User CA    |  |  Device CA   |  |  Server CA   | 
+|   User CA    |  |  Device CA   |  |  Server CA   |
  --------------    --------------    --------------
        |                  |                 |        \
  --------------    --------------    --------------    ---------------
@@ -46,9 +61,9 @@ certificates for use with signing users, devices, servers, and ca clients.
 * Enhancements
   * Added `/health_check` to router to return 200.
   * Removed setting the docker ENTRYPOINT in the image.
-    
+
     This makes it easier to make a container for use in dev and test.
-    You can bind mount a directory containing your cfssl configs and 
+    You can bind mount a directory containing your cfssl configs and
     certificates.
 
     ```
@@ -66,7 +81,7 @@ certificates for use with signing users, devices, servers, and ca clients.
       -p 8443:8443 \
       nerveshub/nerves_hub_ca:v0.2.0
     ```
-  
+
 ## v0.1.0
 
 Initial Release.
@@ -74,7 +89,7 @@ Initial Release.
 `nerves_hub_ca` is released as a docker image and pushed to dockerhub.
 The `ENTRYPOINT` of the container is configured to execute an included
 `docker-entrypoint.sh` script which will perform an `aws s3 sync` of the
-production certificates. 
+production certificates.
 
 If you are using this image privately, you can either
 specify your own bucket / aws credentials when running the container:
@@ -89,7 +104,7 @@ docker run --rm --name nerves-hub-ca \
   nerveshub/nerves_hub_ca:0.1.0
 ```
 
-Or you can override the `ENTRYPOINT` by basing a new image off 
+Or you can override the `ENTRYPOINT` by basing a new image off
 `nerveshub/nerves_hub_ca:0.1.0`
 
 ```
