@@ -42,7 +42,7 @@ defmodule NervesHubCA.MixProject do
       {:plug_cowboy, "~> 2.0"},
       {:cowboy, "~> 2.1"},
       {:jason, "~> 1.0"},
-      {:distillery, "~> 1.5"},
+      {:distillery, "~> 2.0"},
       {:ex_doc, "~> 0.18", only: [:test, :dev], runtime: false}
     ]
   end
