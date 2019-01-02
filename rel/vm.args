@@ -1,5 +1,5 @@
 ## Name of the node
--name ${APP_NAME}@${LOCAL_IPV4}
+-name ${APP_NAME}@127.0.0.1
 
 ## Cookie for distributed erlang
 -setcookie "${ERL_COOKIE}"
