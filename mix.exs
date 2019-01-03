@@ -37,7 +37,7 @@ defmodule NervesHubCA.MixProject do
     [
       {:ecto_sql, "~> 3.0.0-rc or ~> 3.0"},
       {:postgrex, "~> 0.14.0-rc or ~> 0.14"},
-      {:x509, "~> 0.4"},
+      {:x509, "~> 0.5.1 or ~> 0.6"},
       {:plug, "~> 1.7"},
       {:plug_cowboy, "~> 2.0"},
       {:cowboy, "~> 2.1"},

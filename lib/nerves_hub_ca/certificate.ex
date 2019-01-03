@@ -57,23 +57,44 @@ defmodule NervesHubCA.Certificate do
   end
 
   def encode_expiry(otp_certificate) do
-    {:utcTime, time} =
+    {type, timestamp} =
       X509.Certificate.validity(otp_certificate)
       |> validity()
       |> Keyword.get(:notAfter)
 
-    time
-    |> to_string
-    |> convert_generalized_time
+    {type, to_string(timestamp)}
+    |> convert_timestamp
   end
 
-  defp convert_generalized_time(timestamp) do
+  defp convert_timestamp({:utcTime, timestamp}) do
     <<year::binary-unit(8)-size(2), month::binary-unit(8)-size(2), day::binary-unit(8)-size(2),
       hour::binary-unit(8)-size(2), minute::binary-unit(8)-size(2),
       second::binary-unit(8)-size(2), "Z">> = timestamp
 
     NaiveDateTime.new(
       String.to_integer(year) + @era,
+      String.to_integer(month),
+      String.to_integer(day),
+      String.to_integer(hour),
+      String.to_integer(minute),
+      String.to_integer(second)
+    )
+    |> case do
+      {:ok, naive_date_time} ->
+        DateTime.from_naive!(naive_date_time, "Etc/UTC")
+
+      error ->
+        error
+    end
+  end
+
+  defp convert_timestamp({:generalTime, timestamp}) do
+    <<year::binary-unit(8)-size(4), month::binary-unit(8)-size(2), day::binary-unit(8)-size(2),
+      hour::binary-unit(8)-size(2), minute::binary-unit(8)-size(2),
+      second::binary-unit(8)-size(2), "Z">> = timestamp
+
+    NaiveDateTime.new(
+      String.to_integer(year),
       String.to_integer(month),
       String.to_integer(day),
       String.to_integer(hour),
