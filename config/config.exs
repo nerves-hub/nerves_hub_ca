@@ -18,10 +18,6 @@ working_dir = System.get_env("NERVES_HUB_CA_DIR") || working_dir
 
 config :nerves_hub_ca, working_dir: working_dir
 
-config :nerves_hub_ca, :cfssl_defaults,
-  ca: Path.join(working_dir, "root-ca.pem"),
-  ca_key: Path.join(working_dir, "ca-key.pem")
-
 config :nerves_hub_ca, :api,
   otp_app: :nerves_hub_ca,
   port: 8443,
