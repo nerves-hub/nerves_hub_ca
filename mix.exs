@@ -35,8 +35,8 @@ defmodule NervesHubCA.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ecto_sql, "~> 3.0.0-rc or ~> 3.0"},
-      {:postgrex, "~> 0.14.0-rc or ~> 0.14"},
+      {:ecto_sql, "~> 3.0"},
+      {:postgrex, "~> 0.14"},
       {:x509, "~> 0.5.1 or ~> 0.6"},
       {:plug, "~> 1.7"},
       {:plug_cowboy, "~> 2.0"},
