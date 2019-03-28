@@ -7,15 +7,6 @@ trusted device connections to the NervesHub API. The certificate authority
 application should be run disconnected from the public internet and only
 interface with other trusted servers.
 
-# Configuration
-
-NervesHubCA requires that `cfssl` is installed.
-Learn more about installing `cfssl` at https://github.com/cloudflare/cfssl
-
-NervesHubCA will bring up a supervised instance of `cfssl` and attempt to start
-a `cowboy2` HTTPS web server. Starting the web server requires that the `cfssl`
-instance started with a ca certificate and a new certificate is generated.
-
 # Certificate Chain Structure
 ```
                    --------------
@@ -41,55 +32,75 @@ Generate initial certificates
 mix nerves_hub_ca.init
 ```
 
-This will generate the initial certificate chain and place it in `{cwd}/etc/cfssl`.
+This will generate the initial certificate chain and place it in `{cwd}/etc/ssl`.
 You can specify a different location by passing the `--path` option:
 
 ```bash
 mix nerves_hub_ca.init --path /tmp
 ```
 
-Finally, configure the `:nerves_hub_ca` application with the location of the
-certificates. See the NervesHubCA config.exs for examples.
+## Configuration
 
-## Configuring the API webserver
-
-All options under the config `:nerves_hub_ca` `:api` are passed through when
-configuring `:cowboy`.
-
-You will need to specify a port to run the web server on
+`NervesHubCA` is configured to use certs and keys generated in the default locations. If you specified a custom location with `--path` or `NERVES_HUB_CA_DIR`, then you will need to update your config for the API:
 
 ```elixir
-# config/config.exs
+working_dir = "/your/custom/path"
 
+config :nerves_hub_ca, :api,
+  cacertfile: Path.join(working_dir, "ca.pem"),
+  certfile: Path.join(working_dir, "ca.nerves-hub.org.pem"),
+  keyfile: Path.join(working_dir, "ca.nerves-hub.org-key.pem")
+
+config :nerves_hub_ca, CA.User,
+  ca: Path.join(working_dir, "user-root-ca.pem"),
+  ca_key: Path.join(working_dir, "user-root-ca-key.pem")
+
+config :nerves_hub_ca, CA.Device,
+  ca: Path.join(working_dir, "device-root-ca.pem"),
+  ca_key: Path.join(working_dir, "device-root-ca-key.pem")
+```
+
+All options under the config keys `:nerves_hub_ca, :api` are passed through when configuring `:cowboy`. So if you need to change HTTP specific settings, such as the port (which is defaulted to `8443`), you can add it to the config:
+
+```elixir
 config :nerves_hub_ca, :api, 
   port: 8443
 ```
 
-For added securing, you can enable client SSL and limit requests to only trusted
-servers.
+For added security, you can enable client SSL and limit requests to only trusted servers.
 
+```elixir
 config :nerves_hub_ca, :api,
   port: 8443,
   verify: :verify_peer,
   fail_if_no_peer_cert: true
+```
 
 # API
 
-* Route: `/create_device_certificate`
-  * Method: `POST`
+* Route: `/health_check`
+  * Method: **GET**
+  * Response: 200 OK
+    
+* Route: `/sign_device_csr`
+  * Method: **POST**
   * Parameters:
-    * `serial`: The manufacture serial number.
+    * `csr`: Binary certificate signing request for the device
 
-    * Response Parameters
-      * `certificate`: The certificate.
-      * `certificate_request`: The certificate signing request.
-      * `private_key`: The private key.
-      * `sums`: Certificate checksums.
+  * Response Parameters
+    * `cert`: The certificate pem
+    * `issuer`: The issuer pem
+    * `error`: Present if any error occurred during processing
 
-  * Route: `*`
-    * All other matches are proxied to the cfssl instance.
+* Route: `/sign_user_csr`
+  * Method: **POST**
+  * Parameters:
+    * `csr`: Binary certificate signing request for the device
 
-Information about API endpoints can be found in the [CFSSL Docs](https://github.com/cloudflare/cfssl/tree/master/doc/api)
+  * Response Parameters
+    * `cert`: The certificate pem
+    * `issuer`: The issuer pem
+    * `error`: Present if any error occurred during processing
 
 # Tests
 
