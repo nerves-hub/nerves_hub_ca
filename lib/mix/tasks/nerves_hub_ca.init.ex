@@ -1,7 +1,7 @@
 defmodule Mix.Tasks.NervesHubCa.Init do
   alias NervesHubCA.CertificateTemplate
 
-  @path Path.join(File.cwd!(), "etc/cfssl")
+  @path Path.join(File.cwd!(), "etc/ssl")
 
   @switches [
     path: :string
