@@ -1,24 +1,29 @@
 defmodule NervesHubCA.Router do
   @moduledoc """
 
-  Route: /device
+  Route: /health_check
+    Method: GET
+    Response: 200 OK
+      
+  Route: /sign_device_csr
     Method: POST
     Parameters:
-      `serial`: The manufacture serial number
+      `csr`: Binary certificate signing request for the device
 
     Response Parameters
-      `certificate`: The certificate
-      `certificate_request`: The certificate signing request
-      `private_key`: The private key
-      `sums`: Certificate checksums
+      `cert`: The certificate pem
+      `issuer`: The issuer pem
+      `error`: Present if any error occurred during processing
 
-  Route: *
-    All other matches are attempted directly against the cfssl instance
+  Route: /sign_user_csr
+    Method: POST
+    Parameters:
+      `csr`: Binary certificate signing request for the device
 
-  For more information on the available api endpoints
-  please refer to the CFSSL api docs
-
-  https://github.com/cloudflare/cfssl/tree/master/doc/api
+    Response Parameters
+      `cert`: The certificate pem
+      `issuer`: The issuer pem
+      `error`: Present if any error occurred during processing
   """
 
   use Plug.Router
