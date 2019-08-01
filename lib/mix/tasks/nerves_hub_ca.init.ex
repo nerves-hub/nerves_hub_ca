@@ -4,14 +4,15 @@ defmodule Mix.Tasks.NervesHubCa.Init do
   @path Path.join(File.cwd!(), "etc/ssl")
 
   @switches [
-    path: :string
+    path: :string,
+    host: :string
   ]
 
   def run(args) do
     {opts, _args} = OptionParser.parse!(args, strict: @switches)
 
     path = opts[:path] || Application.get_env(:nerves_hub_ca, :working_dir) || @path
-
+    host = opts[:host] || "nerves-hub.org"
     File.mkdir_p(path)
 
     # Generate Self-Signed Root
@@ -37,23 +38,23 @@ defmodule Mix.Tasks.NervesHubCa.Init do
 
     {ca_server, ca_server_key} =
       gen_server_cert(server_root_ca, server_root_ca_key, "NervesHub CA Server", [
-        "ca.nerves-hub.org"
+        "ca.#{host}"
       ])
 
     {api_server, api_server_key} =
       gen_server_cert(server_root_ca, server_root_ca_key, "NervesHub API Server", [
-        "api.nerves-hub.org"
+        "api.#{host}"
       ])
 
     {device_server, device_server_key} =
       gen_server_cert(server_root_ca, server_root_ca_key, "NervesHub Device Server", [
-        "device.nerves-hub.org"
+        "device.#{host}"
       ])
 
     write_certs(server_root_ca, server_root_ca_key, "server-root-ca", path)
-    write_certs(ca_server, ca_server_key, "ca.nerves-hub.org", path)
-    write_certs(api_server, api_server_key, "api.nerves-hub.org", path)
-    write_certs(device_server, device_server_key, "device.nerves-hub.org", path)
+    write_certs(ca_server, ca_server_key, "ca.#{host}", path)
+    write_certs(api_server, api_server_key, "api.#{host}", path)
+    write_certs(device_server, device_server_key, "device.#{host}", path)
 
     ca_bundle_path = Path.join(path, "ca.pem")
 
@@ -68,7 +69,7 @@ defmodule Mix.Tasks.NervesHubCa.Init do
   defp gen_server_cert(issuer, issuer_key, common_name, subject_alt_names) do
     opts = [
       hash: CertificateTemplate.hash(),
-      validity: NervesHubCA.CertificateTemplate.years(3),
+      validity: NervesHubCA.CertificateTemplate.years(5),
       extensions: [
         subject_alt_name: X509.Certificate.Extension.subject_alt_name(subject_alt_names)
       ]
