@@ -2,7 +2,7 @@ defmodule NervesHubCA.Release.Tasks do
   alias Ecto.Migrator
 
   @otp_app :nerves_hub_ca
-  @start_apps [:logger, :ssl, :postgrex, :ecto]
+  @start_apps [:logger, :ssl, :postgrex, :ecto_sql]
 
   def migrate do
     init(@otp_app, @start_apps)
