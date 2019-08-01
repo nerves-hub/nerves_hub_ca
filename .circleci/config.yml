@@ -90,13 +90,10 @@ deploy: &deploy
   run:
     name: Deploy to production
     command: |
-      ecs-deploy \
-        -c $CLUSTER \
-        -n nerves-hub-ca \
-        -i nerveshub/nerves_hub_ca:$DOCKER_TAG \
-        -t 600 \
-        --enable-rollback \
-        --max-definitions 10
+      rel/scripts/ecs-deploy.sh \
+        $CLUSTER \
+        nerves-hub-ca \
+        nerveshub/nerves_hub_ca:$DOCKER_TAG
 
 send_notifications: &send_notifications
   run:
