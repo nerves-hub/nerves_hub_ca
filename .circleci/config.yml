@@ -78,17 +78,20 @@ migrate: &migrate
   run:
     name: Run Migrations
     command: |
-      NERVES_HUB_CA_TASK=$(rel/scripts/ecs-update-task.sh nerves_hub_ca nerveshub/nerves_hub_ca:$DOCKER_TAG)
+      NERVES_HUB_CA_TASK=$(rel/scripts/ecs-update-task.sh $TASK nerveshub/nerves_hub_ca:$DOCKER_TAG)
       rel/scripts/ecs-migrate.sh \
-        nerves-hub \
-        $NERVES_HUB_CA_TASK
+        $VPC \
+        $CLUSTER \
+        $NERVES_HUB_CA_TASK \
+        $TASK_SG
+
 
 deploy: &deploy
   run:
     name: Deploy to production
     command: |
       ecs-deploy \
-        -c nerves-hub \
+        -c $CLUSTER \
         -n nerves-hub-ca \
         -i nerveshub/nerves_hub_ca:$DOCKER_TAG \
         -t 600 \
@@ -102,7 +105,7 @@ send_notifications: &send_notifications
       rel/scripts/slack-notification.sh \
         $SLACK_INCOMING_WEBHOOK_URL \
         "#nerves-hub" \
-        "NervesHub Deployment" "Deployed: \`$DOCKER_IMAGE:$DOCKER_TAG\`"
+        "NervesHub Deployment" "Deployed: $CLUSTER:\`$DOCKER_IMAGE:$DOCKER_TAG\`"
 
 version: 2
 jobs:
@@ -153,7 +156,7 @@ jobs:
           key: docker-{{ .Branch }}-{{ .Revision }}
           paths: "/docker"
 
-  push:
+  push_production:
     <<: *defaults
     steps:
       - checkout
@@ -173,27 +176,81 @@ jobs:
             docker push \
               $DOCKER_IMAGE:latest
 
-  migrate:
+  push_staging:
     <<: *defaults
     steps:
       - checkout
       - run: echo "export APP_NAME=nerves_hub_ca" >> $BASH_ENV
+      - <<: *remote_docker
+      - <<: *docker_env
+      - restore_cache:
+          keys:
+            - docker-{{ .Branch }}-{{ .Revision }}
+      - <<: *docker_import
+      - run:
+          name: Push docker image to dockerhub
+          command: |
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker push \
+              $DOCKER_IMAGE:$DOCKER_TAG
+
+  migrate_staging:
+    <<: *defaults
+    steps:
+      - checkout
+      - run: echo "export APP_NAME=nerves_hub_ca" >> $BASH_ENV
+      - run: echo "export CLUSTER=nerves-hub-staging" >> $BASH_ENV
+      - run: echo "export TASK=nerves-hub-staging-ca" >> $BASH_ENV
+      - run: echo "export TASK_SG=nerves-hub-staging-ca-sg" >> $BASH_ENV
+      - run: echo "export VPC=nerves-hub-staging" >> $BASH_ENV
       - <<: *docker_env
       - run:
           name: Lock deployments
-          command: rel/scripts/build-locking.sh --job-name migrate
+          command: rel/scripts/build-locking.sh --job-name migrate_staging
       - <<: *migrate
 
-  deploy:
+  migrate_production:
+    <<: *defaults
+    steps:
+      - checkout
+      - run: echo "export APP_NAME=nerves_hub_ca" >> $BASH_ENV
+      - run: echo "export CLUSTER=nerves-hub" >> $BASH_ENV
+      - run: echo "export TASK=nerves_hub_ca" >> $BASH_ENV
+      - run: echo "export TASK_SG=nerves-hub-ca-sg" >> $BASH_ENV
+      - run: echo "export VPC=nerves-hub" >> $BASH_ENV
+      - <<: *docker_env
+      - run:
+          name: Lock deployments
+          command: rel/scripts/build-locking.sh --job-name migrate_production
+      - <<: *migrate
+
+  deploy_staging:
     <<: *defaults
     steps:
       - checkout
       - <<: *remote_docker
       - run: echo "export APP_NAME=nerves_hub_ca" >> $BASH_ENV
+      - run: echo "export CLUSTER=nerves-hub-staging" >> $BASH_ENV
+      - run: echo "export TASK=nerves-hub-staging-ca" >> $BASH_ENV
       - <<: *docker_env
       - run:
           name: Lock deployments
-          command: rel/scripts/build-locking.sh --job-name deploy
+          command: rel/scripts/build-locking.sh --job-name deploy_staging
+      - <<: *deploy
+      - <<: *send_notifications
+
+  deploy_production:
+    <<: *defaults
+    steps:
+      - checkout
+      - <<: *remote_docker
+      - run: echo "export APP_NAME=nerves_hub_ca" >> $BASH_ENV
+      - run: echo "export CLUSTER=nerves-hub" >> $BASH_ENV
+      - run: echo "export TASK=nerves_hub_ca" >> $BASH_ENV
+      - <<: *docker_env
+      - run:
+          name: Lock deployments
+          command: rel/scripts/build-locking.sh --job-name deploy_production
       - <<: *deploy
       - <<: *send_notifications
 
@@ -206,24 +263,47 @@ workflows:
             context: org-global
             requires:
               - test
-        - push:
-            context: org-global
+        - approve-deploy-staging:
+            type: approval
+            requires:
+              - build
+        - approve-deploy-production:
+            type: approval
             requires:
               - build
             filters:
               branches:
                 only: master
-        - migrate:
+        - push_staging:
             context: org-global
             requires:
-              - push
+              - approve-deploy-staging
+        - push_production:
+            context: org-global
+            requires:
+              - approve-deploy-production
             filters:
               branches:
                 only: master
-        - deploy:
+        - migrate_staging:
             context: org-global
             requires:
-              - migrate
+              - push_staging
+        - migrate_production:
+            context: org-global
+            requires:
+              - push_production
+            filters:
+              branches:
+                only: master
+        - deploy_staging:
+            context: org-global
+            requires:
+              - migrate_staging
+        - deploy_production:
+            context: org-global
+            requires:
+              - migrate_production
             filters:
               branches:
                 only: master
