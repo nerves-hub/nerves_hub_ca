@@ -5,12 +5,18 @@ defmodule NervesHubCA.MixProject do
     [
       app: :nerves_hub_ca,
       version: "0.5.0",
-      elixir: "~> 1.6",
+      elixir: "~> 1.9",
       source_url: "https://github.com/nerves-hub/nerves_hub_ca",
       start_permanent: Mix.env() == :prod,
       docs: docs(),
       deps: deps(),
-      aliases: [test: ["ecto.create --quiet", "ecto.migrate", "test"]]
+      aliases: [test: ["ecto.create --quiet", "ecto.migrate", "test"]],
+      releases: [
+        nerves_hub_ca: [
+          steps: [:assemble],
+          include_executables_for: [:unix]
+        ]
+      ]
     ]
   end
 
@@ -41,7 +47,6 @@ defmodule NervesHubCA.MixProject do
       {:plug_cowboy, "~> 2.0"},
       {:cowboy, "~> 2.1"},
       {:jason, "~> 1.0"},
-      {:distillery, "~> 2.0.0"},
       {:ex_doc, "~> 0.18", only: [:test, :dev], runtime: false}
     ]
   end
