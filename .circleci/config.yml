@@ -270,7 +270,7 @@ workflows:
               - build
             filters:
               branches:
-                only: master
+                only: main
         - push_staging:
             context: org-global
             requires:
@@ -281,7 +281,7 @@ workflows:
               - approve-deploy-production
             filters:
               branches:
-                only: master
+                only: main
         - migrate_staging:
             context: org-global
             requires:
@@ -292,7 +292,7 @@ workflows:
               - push_production
             filters:
               branches:
-                only: master
+                only: main
         - deploy_staging:
             context: org-global
             requires:
@@ -303,4 +303,4 @@ workflows:
               - migrate_production
             filters:
               branches:
-                only: master
+                only: main
