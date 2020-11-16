@@ -2,7 +2,7 @@
   "containerOverrides": [
     {
       "name": "nerves_hub_ca",
-      "command": ["/app/bin/nerves_hub_ca", "migrate"]
+      "command": ["/app/bin/nerves_hub_ca", "eval", "NervesHubCA.Release.Tasks.migrate_and_seed()"]
     }
   ]
 }
