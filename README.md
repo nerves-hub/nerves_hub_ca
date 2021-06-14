@@ -119,3 +119,9 @@ up a clean CA by altering the mix aliases.
   end
 #...
 ```
+
+## Building for a private installation
+
+Building the application for an alternative host will require setting the environment
+variavle `NERVES_HUB_HOST`. This will default to `nerves-hub.org`. You should set this
+to the web host for your domain.
