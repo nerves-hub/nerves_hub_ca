@@ -8,7 +8,7 @@ defmodule NervesHubCA.APITest do
       key = X509.PrivateKey.new_ec(:secp256r1)
       csr = X509.CSR.new(key, subject)
 
-      assert {:ok, %{cert: cert, issuer: issuer}} = NervesHubCA.sign_device_csr(csr)
+      assert {:ok, %{cert: cert, issuer: _issuer}} = NervesHubCA.sign_device_csr(csr)
 
       ca_certs = Path.join(NervesHubCA.Storage.working_dir(), "ca.pem")
 
@@ -33,7 +33,7 @@ defmodule NervesHubCA.APITest do
 
       ca_certs = Path.join(NervesHubCA.Storage.working_dir(), "ca.pem")
 
-      assert {:ok, %{cert: cert, issuer: issuer}} = NervesHubCA.sign_user_csr(csr)
+      assert {:ok, %{cert: cert, issuer: _issuer}} = NervesHubCA.sign_user_csr(csr)
 
       file = write_tmp("user.pem", cert)
 
