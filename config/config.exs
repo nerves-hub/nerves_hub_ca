@@ -16,7 +16,7 @@ working_dir =
     :test -> Path.expand("../test/tmp", __DIR__)
   end
 
-host = working_dir = System.get_env("NERVES_HUB_CA_DIR") || working_dir
+working_dir = System.get_env("NERVES_HUB_CA_DIR") || working_dir
 
 config :nerves_hub_ca, working_dir: working_dir
 
